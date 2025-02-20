@@ -1,0 +1,88 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-parcelize'
+}
+
+android {
+    namespace "com.benjaminwan.ocrlibrary"
+    compileSdk compile_sdk_version
+
+    defaultConfig {
+
+        minSdkVersion min_sdk_version
+        targetSdkVersion target_sdk_version
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+
+        externalNativeBuild {
+            cmake {
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.10.2"
+        }
+    }
+
+    flavorDimensions 'ocr_library_types'
+    productFlavors {
+        /*cpu {
+            minSdkVersion 21
+            externalNativeBuild {
+                cmake {
+                    arguments "-DOCR_LITE_VULKAN=OFF"
+                }
+            }
+        }
+        gpu {
+            minSdkVersion 24
+            externalNativeBuild {
+                cmake {
+                    arguments "-DOCR_LITE_VULKAN=ON"
+                }
+            }
+        }*/
+    }
+    ndkVersion '26.1.10909125'
+    buildToolsVersion build_tool_version
+
+    libraryVariants.all {
+        variant ->
+            variant.outputs.all {
+                outputFileName = "${project.name}-${defaultConfig.versionName}-${variant.flavorName}-${variant.buildType.name}.aar"
+            }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    //Test
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    //Kotlin
+    //implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
+    //Android
+    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}
