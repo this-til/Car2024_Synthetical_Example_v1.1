@@ -4,7 +4,7 @@ pluginManagement {
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
-        maven {url 'https://developer.huawei.com/repo/'}
+        maven { url 'https://developer.huawei.com/repo/' }
     }
 }
 dependencyResolutionManagement {
@@ -13,8 +13,11 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
-        maven {url 'https://developer.huawei.com/repo/'}
+        maven { url 'https://developer.huawei.com/repo/' }
     }
 }
 rootProject.name = "Car2024_Synthetical_Example_v1.1"
-include ':app',':openCVLibrary343'
+include ':app'
+include ':openCVLibrary343'
+include ':service'
+include ':ocr'
