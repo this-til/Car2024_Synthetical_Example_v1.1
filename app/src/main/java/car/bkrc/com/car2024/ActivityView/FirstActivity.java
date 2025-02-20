@@ -238,19 +238,19 @@ public class FirstActivity extends AppCompatActivity {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             vSimple(getApplicationContext(),30); // 控制手机震动进行反馈
-            switch (item.getItemId()) {
-                case R.id.home_page_item:
-                    mLateralViewPager.setCurrentItem(0);
-                    return true;
-                case R.id.scene_setting_item:
-                    mLateralViewPager.setCurrentItem(1);
-                    return true;
-                case R.id.device_manage_item:
-                    mLateralViewPager.setCurrentItem(2);
-                    return true;
-                case R.id.personal_center_item:
-                    mLateralViewPager.setCurrentItem(3);
-                    return true;
+            int itemId = item.getItemId();
+            if (itemId == R.id.home_page_item) {
+                mLateralViewPager.setCurrentItem(0);
+                return true;
+            } else if (itemId == R.id.scene_setting_item) {
+                mLateralViewPager.setCurrentItem(1);
+                return true;
+            } else if (itemId == R.id.device_manage_item) {
+                mLateralViewPager.setCurrentItem(2);
+                return true;
+            } else if (itemId == R.id.personal_center_item) {
+                mLateralViewPager.setCurrentItem(3);
+                return true;
             }
             return false;
         }
@@ -286,36 +286,30 @@ public class FirstActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {  //菜单项监听
         vSimple(getApplicationContext(),30); // 控制手机震动进行点击反馈
         int id = item.getItemId();
-        switch (id) {
-            case R.id.car_status:
-                if (item.getTitle().equals(getResources().getText(R.string.main_status))) {
-                    item.setTitle(getResources().getText(R.string.follow_status));
-                    Connect_Transport.stateChange(2);
-                    EventBus.getDefault().post(new StateChangeBean(0));
-                } else if (item.getTitle().equals(getResources().getText(R.string.follow_status))) {
-                    item.setTitle(getResources().getText(R.string.main_status));
-                    Connect_Transport.stateChange(1);
-                    EventBus.getDefault().post(new StateChangeBean(1));
-                }
-                break;
-            case R.id.car_control:
-                if (item.getTitle().equals(getResources().getText(R.string.main_control))) {
-                    chief_control_flag = true;
-                    item.setTitle(getResources().getText(R.string.follow_control));
-                    EventBus.getDefault().post(new StateChangeBean(2));
-                    Connect_Transport.TYPE = 0xAA;
-                } else if (item.getTitle().equals(getResources().getText(R.string.follow_control))) {
-                    chief_control_flag = false;
-                    item.setTitle(getResources().getText(R.string.main_control));
-                    EventBus.getDefault().post(new StateChangeBean(3));
-                    Connect_Transport.TYPE = 0x02;
-                }
-                break;
-            case R.id.clear_coded_disc:
-                Connect_Transport.clear();
-                break;
-            default:
-                break;
+        if (id == R.id.car_status) {
+            if (item.getTitle().equals(getResources().getText(R.string.main_status))) {
+                item.setTitle(getResources().getText(R.string.follow_status));
+                Connect_Transport.stateChange(2);
+                EventBus.getDefault().post(new StateChangeBean(0));
+            } else if (item.getTitle().equals(getResources().getText(R.string.follow_status))) {
+                item.setTitle(getResources().getText(R.string.main_status));
+                Connect_Transport.stateChange(1);
+                EventBus.getDefault().post(new StateChangeBean(1));
+            }
+        } else if (id == R.id.car_control) {
+            if (item.getTitle().equals(getResources().getText(R.string.main_control))) {
+                chief_control_flag = true;
+                item.setTitle(getResources().getText(R.string.follow_control));
+                EventBus.getDefault().post(new StateChangeBean(2));
+                Connect_Transport.TYPE = 0xAA;
+            } else if (item.getTitle().equals(getResources().getText(R.string.follow_control))) {
+                chief_control_flag = false;
+                item.setTitle(getResources().getText(R.string.main_control));
+                EventBus.getDefault().post(new StateChangeBean(3));
+                Connect_Transport.TYPE = 0x02;
+            }
+        } else if (id == R.id.clear_coded_disc) {
+            Connect_Transport.clear();
         }
         return super.onOptionsItemSelected(item);
     }

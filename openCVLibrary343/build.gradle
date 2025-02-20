@@ -1,11 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 33
+    namespace 'org.opencv'
+    compileSdk compile_sdk_version
+    ndkVersion ndk_version
 
     defaultConfig {
-        minSdkVersion 24
-        targetSdkVersion 33
+        minSdkVersion min_sdk_version
+        targetSdkVersion target_sdk_version
     }
 
     buildTypes {
@@ -14,5 +16,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
-    namespace 'org.opencv'
+
+    buildFeatures {
+        aidl true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
