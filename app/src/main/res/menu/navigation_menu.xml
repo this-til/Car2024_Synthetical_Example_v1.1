@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/home_page_item"
+        android:icon="@drawable/ic_one_ic_port"
+        android:title="@string/first_main" />
+
+    <item
+        android:id="@+id/scene_setting_item"
+        android:icon="@drawable/ic_zigbee"
+        android:title="@string/zigbee_task" />
+
+    <item
+        android:id="@+id/device_manage_item"
+        android:icon="@drawable/ic_inferad"
+        android:title="@string/infred_task" />
+
+    <item
+        android:id="@+id/personal_center_item"
+        android:icon="@drawable/ic_four_ic"
+        android:title="@string/smart_control" />
+
+</menu>

@@ -1,0 +1,68 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'car.bkrc.com.car2024'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "car.bkrc.com.car2024"
+        minSdk 24
+        versionCode 1
+        versionName "2024-V1.0"
+        targetSdkVersion 33
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            moduleName "serial_port"
+            ldLibs "log", "z", "m"
+            //noinspection ChromeOsAbiSupport
+            abiFilters "arm64-v8a","armeabi-v7a"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    productFlavors {
+    }
+
+    buildFeatures{
+        dataBinding = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //noinspection GradleCompatible
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'org.greenrobot:eventbus:3.3.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation project(path: ':openCVLibrary343')
+    implementation files('libs/usbSerialForAndroid-debug.aar')
+    implementation files('libs/libvlc-all-3.3.0-eap17.aar')
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.github.HyperInspire:hyperlpr3-android-sdk:1.0.3' // 车牌识别核心库
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'com.google.mlkit:barcode-scanning:17.2.0'   // 二维码识别核心库
+    // 引入基础SDK
+    implementation 'com.huawei.hms:ml-computer-vision-documentskew:3.11.0.301'
+    // 引入文档检测/校正模型包
+    implementation 'com.huawei.hms:ml-computer-vision-documentskew-model:3.7.0.301'
+}

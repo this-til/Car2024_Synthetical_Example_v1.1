@@ -1,0 +1,13 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    dependencies {
+        // 增加Android Gradle插件版本号配置，{version}为实际的Gradle插件版本号，例如7.1.1。
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        // 增加AGC插件配置，请您参见AGC插件依赖关系选择合适的AGC插件版本。
+        classpath 'com.huawei.agconnect:agcp:1.6.0.300'
+    }
+}
+plugins {
+    id 'com.android.application' version '7.4.2' apply false
+    id 'com.android.library' version '7.4.2' apply false
+}

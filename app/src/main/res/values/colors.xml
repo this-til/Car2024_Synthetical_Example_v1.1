@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#e9e9e9</color>
+    <color name="colorPrimaryDark">#44b0fd</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="white">#ffffff</color>
+    <!--  <color name="colorPrimaryDark">#303F9F</color>-->
+    <color name="blue">#56abe4</color>
+    <color name="black">#000000</color>
+    <color name="switch_black">#ececec</color>
+    <color name="fsk_subtitle_black">#000000</color>
+    <color name="fsk_base_bg">#56abe4</color>
+    <color name="fsk_green">#6dd56d</color>
+
+    <color name="firstColor">#00BCD4</color>
+    <color name="secondColor">#E91E63</color>
+    <color name="thirdColor">#FF5722</color>
+    <color name="fourthColor">#4CAF50</color>
+    <color name="line">#e6e6e6</color>
+    <color name="font_color">#666666</color>
+    <color name="orange">#FF5500</color>
+    <color name="default_color">#2b8003</color>
+    <color name="color_gray">#424242</color>
+    <color name="shift_color_gray">#ccc</color>
+    <color name="color_white">#fff</color>
+    <color name="withoutColoredBackground">#868686</color>
+    <color name="lucency">#00ffffff</color>
+    <!--    <color name="transparent">#00000000</color>-->
+</resources>

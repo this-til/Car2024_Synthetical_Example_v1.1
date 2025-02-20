@@ -1,0 +1,71 @@
+<resources>
+    <string name="app_name">Car2024-Example</string>
+    <string name="deviceid">设备ID</string>
+    <string name="loginname">账  户</string>
+
+    <string name="sp_data">90</string>
+    <string name="mp_data">300</string>
+    <string name="line_data">50</string>
+    <string name="line_disc">循迹速度:</string>
+    <string name="coded_disc">码盘</string>
+    <string name="angle_disc">转弯速度:</string>
+    <string name="main_status">接收智能车（A）数据</string>
+    <string name="follow_status">接收移动机器人数据</string>
+    <string name="main_control">控制智能车（A）</string>
+    <string name="follow_control">控制移动机器人</string>
+    <string name="clear_coded_disc">清除码盘</string>
+    <string name="auto_drive">自动驾驶</string>
+
+    <string name="digital_title">显示数据行:</string>
+    <string name="voicetext">自定义播报文本:</string>
+    <string name="voiceText">百科荣创（北京）科技发展有限公司</string>
+    <string name="slogan">致力于电子信息大类高素质技术技能人才培养！</string>
+
+    <string name="use_socket">无线通信</string>
+    <string name="full_auto">自动驾驶</string>
+
+    <!--设备id和用户名-->
+    <string name="devicetext">BKRC-001</string>
+    <string name="logintext">admin</string>
+    <string name="loginhenttext">此为摄像头账户，请勿修改！</string>
+    <string name="loginpsd">此为摄像头密码，出厂已设置，修改请同步！</string>
+    <string name="isRow">滚动字幕</string>
+    <string name="editChinese">请输入文字</string>
+    <string name="car_name">嵌入式智能车开发单元</string>
+    <string name="vga_name">嵌入式移动机器人开发单元</string>
+    <string name="qr_rec_data">二维码识别结果</string>
+    <string name="ok">OK</string>
+    <!--左侧导航栏-->
+
+    <!--文字识别模型相关参数文字-->
+    <string name="CHOOSE_PRE_INSTALLED_MODEL_KEY">CHOOSE_PRE_INSTALLED_MODEL_KEY</string>
+    <string name="ENABLE_CUSTOM_SETTINGS_KEY">ENABLE_CUSTOM_SETTINGS_KEY</string>
+    <string name="MODEL_PATH_KEY">MODEL_PATH_KEY</string>
+    <string name="LABEL_PATH_KEY">LABEL_PATH_KEY</string>
+    <string name="IMAGE_PATH_KEY">IMAGE_PATH_KEY</string>
+    <string name="CPU_THREAD_NUM_KEY">CPU_THREAD_NUM_KEY</string>
+    <string name="CPU_POWER_MODE_KEY">CPU_POWER_MODE_KEY</string>
+    <string name="INPUT_COLOR_FORMAT_KEY">INPUT_COLOR_FORMAT_KEY</string>
+    <string name="INPUT_SHAPE_KEY">INPUT_SHAPE_KEY</string>
+    <string name="INPUT_MEAN_KEY">INPUT_MEAN_KEY</string>
+    <string name="INPUT_STD_KEY">INPUT_STD_KEY</string>
+    <string name="SCORE_THRESHOLD_KEY">SCORE_THRESHOLD_KEY</string>
+    <string name="MODEL_PATH_DEFAULT">models/ocr_v1_for_cpu</string>
+    <string name="LABEL_PATH_DEFAULT">labels/ppocr_keys_v1.txt</string>
+    <string name="IMAGE_PATH_DEFAULT">images/5.jpg</string>
+    <string name="CPU_THREAD_NUM_DEFAULT">4</string>
+    <string name="CPU_POWER_MODE_DEFAULT">LITE_POWER_HIGH</string>
+    <string name="INPUT_COLOR_FORMAT_DEFAULT">BGR</string>
+    <string name="INPUT_SHAPE_DEFAULT">1,3,960</string>
+    <string name="INPUT_MEAN_DEFAULT">0.485, 0.456, 0.406</string>
+    <string name="INPUT_STD_DEFAULT">0.229,0.224,0.225</string>
+    <string name="SCORE_THRESHOLD_DEFAULT">0.1</string>
+    <string name="FIRST_NAME">智能嵌入式系统综合应用实训开发平台</string>
+    <string name="smart_control">AI与智能控制</string>
+    <string name="infred_task">红外通信</string>
+    <string name="zigbee_task">ZigBee通信</string>
+    <string name="first_main">运动控制</string>
+    <string name="zoom">放大×1</string>
+    <string name="cut_camera">开启相机</string>
+    <string name="cut_car_camera">关闭相机</string>
+</resources>

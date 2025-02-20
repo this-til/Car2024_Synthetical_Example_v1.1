@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="摄像头IP：" />
+
+                <EditText
+                    android:id="@+id/ip_editText1"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_selete_all"
+                    android:digits="0123456789"
+                    android:gravity="center"
+                    android:inputType="textCapCharacters"
+                    android:text="192">
+
+                    <requestFocus />
+                </EditText>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="."
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/ip_editText2"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_selete_all"
+                    android:digits="0123456789"
+                    android:gravity="center"
+                    android:inputType="textCapCharacters"
+                    android:text="168">
+
+                    <requestFocus />
+                </EditText>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="."
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/ip_editText3"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_selete_all"
+                    android:digits="0123456789"
+                    android:ems="10"
+                    android:gravity="center"
+                    android:inputType="textCapCharacters"
+                    android:text="16">
+
+                    <requestFocus />
+                </EditText>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="."
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/ip_editText4"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_selete_all"
+                    android:digits="0123456789"
+                    android:ems="10"
+                    android:gravity="center"
+                    android:inputType="textCapCharacters"
+                    android:text="100">
+
+                    <requestFocus />
+                </EditText>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="访问端口：" />
+
+                <EditText
+                    android:id="@+id/camera_port_editText"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_selete_all"
+                    android:digits="0123456789"
+                    android:gravity="center"
+                    android:inputType="textCapCharacters"
+                    android:text="81">
+
+                    <requestFocus />
+                </EditText>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="网关地址：" />
+
+                <EditText
+                    android:id="@+id/this_ipText"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_selete_all"
+                    android:cursorVisible="false"
+                    android:digits="0123456789"
+                    android:enabled="false"
+                    android:gravity="center"
+                    android:inputType="textCapCharacters"
+                    android:text="192.168.16.254"
+                    android:textIsSelectable="false">
+                    <requestFocus />
+                </EditText>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/recommend_ip_btn"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_back_ground"
+                android:layout_gravity="center"
+                android:text="一键配置"
+                android:layout_margin="5dp"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+</LinearLayout>

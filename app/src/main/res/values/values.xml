@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="default_has_core_menu">true</bool>
+    <bool name="default_is_draw_line_to_center">false</bool>
+    <color name="default_core_menu_normal_background_color">#ffffffff</color>
+    <color name="default_core_menu_selected_background_color">#ff888888</color>
+    <color name="default_core_menu_stroke_color">#ff666666</color>
+    <color name="default_round_menu_normal_background_color">#ffffffff</color>
+    <color name="default_round_menu_selected_background_color">#ff888888</color>
+    <color name="default_round_menu_stroke_color">#ff666666</color>
+    <dimen name="default_core_menu_round_radius">40sp</dimen>
+    <dimen name="default_core_menu_stroke_size">1px</dimen>
+    <dimen name="default_round_menu_stroke_size">1px</dimen>
+    <drawable name="default_core_menu_drawable">@drawable/def_icon</drawable>
+    <drawable name="default_round_menu_drawable">@drawable/right</drawable>
+    <fraction name="default_round_menu_distance">70%</fraction>
+    <integer name="default_round_menu_deviation_degree">0</integer>
+    <integer name="default_round_menu_number">4</integer>
+    <declare-styleable name="DLRoundMenuView">
+        <attr format="boolean" name="RMHasCoreMenu"/> <!-- 是否有中间OK按钮 -->
+        <attr format="color" name="RMCoreMenuNormalBackgroundColor"/> <!-- 正常情况下的中间按钮的背景颜色 -->
+        <attr format="color" name="RMCoreMenuStrokeColor"/> <!-- 中间按钮的描边颜色 -->
+        <attr format="dimension" name="RMCoreMenuStrokeSize"/> <!-- 中间按钮的描边边框大小 -->
+        <attr format="color" name="RMCoreMenuSelectedBackgroundColor"/> <!-- 中间按钮选中时的背景颜色 -->
+        <attr format="reference" name="RMCoreMenuDrawable"/> <!-- 中心按钮图片 -->
+        <attr format="dimension" name="RMCoreMenuRoundRadius"/> <!-- 中心按钮圆形半径 -->
+        <attr format="integer" name="RMRoundMenuNumber"/> <!-- 菜单数量 -->
+        <attr format="integer" name="RMRoundMenuDeviationDegree"/> <!-- 菜单偏移角度 -->
+        <attr format="reference" name="RMRoundMenuDrawable"/> <!-- 菜单图片 -->
+        <attr format="boolean" name="RMIsDrawLineToCenter"/> <!-- 是否画每个菜单扇形到中心点的直线 -->
+        <attr format="color" name="RMRoundMenuNormalBackgroundColor"/> <!-- 菜单正常背景颜色 -->
+        <attr format="color" name="RMRoundMenuSelectedBackgroundColor"/> <!-- 菜单点击背景颜色 -->
+        <attr format="color" name="RMRoundMenuStrokeColor"/> <!-- 菜单描边颜色 -->
+        <attr format="dimension" name="RMRoundMenuStrokeSize"/> <!-- 菜单描边宽度 -->
+        <attr format="fraction" name="RMRoundMenuDistance"/> <!-- 菜单图片与中心点的距离 百分数 -->
+    </declare-styleable>
+</resources>
