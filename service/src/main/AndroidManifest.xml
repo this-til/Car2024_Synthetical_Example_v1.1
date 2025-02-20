@@ -7,7 +7,8 @@
         <service
                 android:name=".Service"
                 android:enabled="true"
-                android:exported="true">
+                android:exported="true"
+                android:permission="TODO">
         </service>
     </application>
 
