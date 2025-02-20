@@ -1,7 +1,6 @@
 package car.bkrc.com.car2024.Utils.OtherUtil;
 
 
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -50,8 +49,8 @@ public class WiFiStateUtil {
             mReceive = new WifiStateBroadcastReceive();
         }
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(wifiManager.WIFI_STATE_CHANGED_ACTION);
-        context.registerReceiver(mReceive, intentFilter);
+        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        context.registerReceiver(mReceive, intentFilter, Context.RECEIVER_EXPORTED);
     }
 
     public void unregisterWifiReceiver() {
@@ -61,18 +60,18 @@ public class WiFiStateUtil {
         }
     }
 
-    class WifiStateBroadcastReceive extends BroadcastReceiver {
+    static class WifiStateBroadcastReceive extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            int wifiState = intent.getIntExtra(wifiManager.EXTRA_WIFI_STATE, 0);
+            int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
             switch (wifiState) {
                 case WifiManager.WIFI_STATE_DISABLED:
-                    ToastUtil.ShowToast(context,"WiFi已关闭,请检查设备连接状态");
+                    ToastUtil.ShowToast(context, "WiFi已关闭,请检查设备连接状态");
                     Log.i(TAG, "onReceive: " + "Wifi已关闭");
                     break;
                 case WifiManager.WIFI_STATE_DISABLING:
-                    ToastUtil.ShowToast(context,"WiFi正在关闭...");
+                    ToastUtil.ShowToast(context, "WiFi正在关闭...");
                     Log.i(TAG, "onReceive: " + "WiFi正在关闭...");
                     break;
                 case WifiManager.WIFI_STATE_ENABLED:
