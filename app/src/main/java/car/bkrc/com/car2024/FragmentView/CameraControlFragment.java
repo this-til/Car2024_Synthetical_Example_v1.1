@@ -85,164 +85,99 @@ public class CameraControlFragment extends Fragment implements View.OnClickListe
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.back_imbtn:
-                exitFragment();
-                break;
-            case R.id.setlocation_btn:
-                // 处理设置预设位点击事件的代码
-                position_onvifItemDialog("设置预设位", 30, 2);
-                break;
-            case R.id.uselocation_btn:
-                // 处理调用预设位点击事件的代码
-                position_onvifItemDialog("调用预设位", 31, 2);
-                break;
-            case R.id.deletelocation_btn:
-                // 处理删除预设位点击事件的代码
-                position_onvifItemDialog("删除预设位", 62, 1);
-                break;
-            case R.id.cruise_leri_btn:
-                // 处理左右巡航点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
-                        28 + "&onestep=" + 1);
-                cruise_gear = 1;
-                cruise_leri_bt.setTextColor(Color.WHITE);
-                cruise_updown_bt.setTextColor(Color.BLACK);
-                cruise_center_bt.setTextColor(Color.BLACK);
-                break;
-            case R.id.cruise_updown__btn:
-                // 处理上下巡航点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
-                        26 + "&onestep=" + 1);
-                cruise_gear = 2;
-                cruise_leri_bt.setTextColor(Color.BLACK);
-                cruise_updown_bt.setTextColor(Color.WHITE);
-                cruise_center_bt.setTextColor(Color.BLACK);
-                break;
-            case R.id.cruise_center_btn:
-                // 处理巡航后居中点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
-                        25 + "&onestep=" + 1);
-                cruise_gear = 3;
-                cruise_leri_bt.setTextColor(Color.BLACK);
-                cruise_updown_bt.setTextColor(Color.BLACK);
-                cruise_center_bt.setTextColor(Color.WHITE);
-                break;
-            case R.id.cruise_stop_btn:
-                // 处理巡航停止点击事件的代码
-                if (cruise_gear == 1) {
-                    cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
-                            29 + "&onestep=" + 0);
-                } else if (cruise_gear == 2) {
-                    cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
-                            27 + "&onestep=" + 0);
-                }
-                cruise_leri_bt.setTextColor(Color.BLACK);
-                cruise_updown_bt.setTextColor(Color.BLACK);
-                break;
-            case R.id.cruise_speed_btn:
-                // 处理巡航速度点击事件的代码
-                setlocation_SpeedDialog();
-                break;
-            case R.id.start_center_btn:
-                // 自动居中点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.SET_MISC, "ptz_center_onstart=" + 1);
-                ToastUtil.ShowToast(getContext(),"启动后自动居中");
-                break;
-            case R.id.start_center_close_btn:
-                // 取消居中点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.SET_MISC, "ptz_center_onstart=" + 0);
-                ToastUtil.ShowToast(getContext(),"启动后恢复关闭前位置");
-                break;
-            case R.id.start_setlocation_btn:
-                position_onvifItemDialog("启动后调用预设位", 0, 0);
-                ToastUtil.ShowToast(getContext(),"请先设置对应预设位后进行调用！");
-                break;
-            case R.id.flick50_btn:
-                // 处理工作模式50 Hz点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 3 + "&value=" + 0);  // 设置镜像翻转
-                break;
-            case R.id.flick60_btn:
-                // 处理工作模式60 Hz点击事件的代码
-                checkWorkMode(getContext(), "温馨提示", "摄像头切换为60Hz工作时可能会导致视频流卡顿或加载缓慢，建议使用50Hz");
-                break;
-            case R.id.turn_0_btn:
-                // 处理原始图像点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 0);  // 设置原图
-                break;
-            case R.id.turn_1_btn:
-                // 处理镜像图像点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 1);  // 设置镜像
-                break;
-            case R.id.turn_2_btn:
-                // 处理翻转图像点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 2);  // 设置翻转
-                break;
-            case R.id.turn_3_btn:
-                // 处理镜像翻转图像点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 3);  // 设置镜像翻转
-                break;
-            case R.id.ircut_off_btn:
-                // 处理红外监测关闭点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 14 + "&value=" + 0);  // 设置红外关闭
-                break;
-            case R.id.ircut_auto_btn:
-                // 处理红外自动开启点击事件的代码
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 14 + "&value=" + 1);  // 设置红外自动开启
-                break;
-            case R.id.restart_camera_btn:
-                // 重启摄像头提示
-                tipAction("点击确认重启后30S左右再次点击刷新即可恢复图像页面！", "重启");
-                break;
-            case R.id.rest_camera_btn:
-                // 重置摄像头提示
-                resetIPcamera();
-                break;
-            case R.id.camera_status_btn:
-                // 获取摄像头状态数据
-                loadingALL();
-                break;
-            case R.id.lum_tv:
-                // 还原亮度
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + LUM_PARAM + "&value=" + 128);  // 恢复出厂亮度
-                break;
-            case R.id.contrast_tv:
-                // 还原对比度
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + CONTRAST_PARAM + "&value=" + 128);  // 恢复出厂对比度
-                break;
-            case R.id.chroma_tv:
-                // 还原色度系数
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + CHROMA_PARAM + "&value=" + 128);  // 恢复出厂色度系数
-                break;
-            case R.id.sat_tv:
-                // 还原饱和度
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + SAT_PARAM + "&value=" + 128);  // 恢复出厂饱和度
-                break;
-            case R.id.setcamerapw_camera_btn:
-                ToastUtil.ShowToast(getContext(),"请在登录页面输入即可！");
-                break;
-            case R.id.time_open_btn:
-                // 设置开启时间水印
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.SET_MISC, "osdenable=" + 1);  // 设置时间水印开启
-                break;
-            case R.id.time_off_btn:
-                // 设置关闭时间水印
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.SET_MISC, "osdenable=" + 0);  // 设置时间水印关闭
-                break;
-            case R.id.findface_open_btn:
-                // 开启人形追踪
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.TRANS_CMD_STRING, "cmd=2127&command=0&enable=1");  // 关闭人形追踪
-                break;
-            case R.id.findface_off_btn:
-                // 关闭人形追踪
-                cameraConntrol.cameraMiscControlPostHttp(FirstActivity.IPCamera, cameraConntrol.TRANS_CMD_STRING, "cmd=2127&command=0&enable=0");  // 关闭人形追踪
-                break;
-            case R.id.findface_sen_btn:
-                // 设置人脸检测灵敏度
-                setFindfacesen();
-                break;
-            default:
-                break;
+        int id = v.getId();
+        if (id == R.id.back_imbtn) {
+            exitFragment();
+        } else if (id == R.id.setlocation_btn) {// 处理设置预设位点击事件的代码
+            position_onvifItemDialog("设置预设位", 30, 2);
+        } else if (id == R.id.uselocation_btn) {// 处理调用预设位点击事件的代码
+            position_onvifItemDialog("调用预设位", 31, 2);
+        } else if (id == R.id.deletelocation_btn) {// 处理删除预设位点击事件的代码
+            position_onvifItemDialog("删除预设位", 62, 1);
+        } else if (id == R.id.cruise_leri_btn) {// 处理左右巡航点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
+                    28 + "&onestep=" + 1);
+            cruise_gear = 1;
+            cruise_leri_bt.setTextColor(Color.WHITE);
+            cruise_updown_bt.setTextColor(Color.BLACK);
+            cruise_center_bt.setTextColor(Color.BLACK);
+        } else if (id == R.id.cruise_updown__btn) {// 处理上下巡航点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
+                    26 + "&onestep=" + 1);
+            cruise_gear = 2;
+            cruise_leri_bt.setTextColor(Color.BLACK);
+            cruise_updown_bt.setTextColor(Color.WHITE);
+            cruise_center_bt.setTextColor(Color.BLACK);
+        } else if (id == R.id.cruise_center_btn) {// 处理巡航后居中点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
+                    25 + "&onestep=" + 1);
+            cruise_gear = 3;
+            cruise_leri_bt.setTextColor(Color.BLACK);
+            cruise_updown_bt.setTextColor(Color.BLACK);
+            cruise_center_bt.setTextColor(Color.WHITE);
+        } else if (id == R.id.cruise_stop_btn) {// 处理巡航停止点击事件的代码
+            if (cruise_gear == 1) {
+                cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
+                        29 + "&onestep=" + 0);
+            } else if (cruise_gear == 2) {
+                cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.DECODER_CONTROL, "command=" +
+                        27 + "&onestep=" + 0);
+            }
+            cruise_leri_bt.setTextColor(Color.BLACK);
+            cruise_updown_bt.setTextColor(Color.BLACK);
+        } else if (id == R.id.cruise_speed_btn) {// 处理巡航速度点击事件的代码
+            setlocation_SpeedDialog();
+        } else if (id == R.id.start_center_btn) {// 自动居中点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.SET_MISC, "ptz_center_onstart=" + 1);
+            ToastUtil.ShowToast(getContext(), "启动后自动居中");
+        } else if (id == R.id.start_center_close_btn) {// 取消居中点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.SET_MISC, "ptz_center_onstart=" + 0);
+            ToastUtil.ShowToast(getContext(), "启动后恢复关闭前位置");
+        } else if (id == R.id.start_setlocation_btn) {
+            position_onvifItemDialog("启动后调用预设位", 0, 0);
+            ToastUtil.ShowToast(getContext(), "请先设置对应预设位后进行调用！");
+        } else if (id == R.id.flick50_btn) {// 处理工作模式50 Hz点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 3 + "&value=" + 0);  // 设置镜像翻转
+        } else if (id == R.id.flick60_btn) {// 处理工作模式60 Hz点击事件的代码
+            checkWorkMode(getContext(), "温馨提示", "摄像头切换为60Hz工作时可能会导致视频流卡顿或加载缓慢，建议使用50Hz");
+        } else if (id == R.id.turn_0_btn) {// 处理原始图像点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 0);  // 设置原图
+        } else if (id == R.id.turn_1_btn) {// 处理镜像图像点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 1);  // 设置镜像
+        } else if (id == R.id.turn_2_btn) {// 处理翻转图像点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 2);  // 设置翻转
+        } else if (id == R.id.turn_3_btn) {// 处理镜像翻转图像点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 5 + "&value=" + 3);  // 设置镜像翻转
+        } else if (id == R.id.ircut_off_btn) {// 处理红外监测关闭点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 14 + "&value=" + 0);  // 设置红外关闭
+        } else if (id == R.id.ircut_auto_btn) {// 处理红外自动开启点击事件的代码
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + 14 + "&value=" + 1);  // 设置红外自动开启
+        } else if (id == R.id.restart_camera_btn) {// 重启摄像头提示
+            tipAction("点击确认重启后30S左右再次点击刷新即可恢复图像页面！", "重启");
+        } else if (id == R.id.rest_camera_btn) {// 重置摄像头提示
+            resetIPcamera();
+        } else if (id == R.id.camera_status_btn) {// 获取摄像头状态数据
+            loadingALL();
+        } else if (id == R.id.lum_tv) {// 还原亮度
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + LUM_PARAM + "&value=" + 128);  // 恢复出厂亮度
+        } else if (id == R.id.contrast_tv) {// 还原对比度
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + CONTRAST_PARAM + "&value=" + 128);  // 恢复出厂对比度
+        } else if (id == R.id.chroma_tv) {// 还原色度系数
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + CHROMA_PARAM + "&value=" + 128);  // 恢复出厂色度系数
+        } else if (id == R.id.sat_tv) {// 还原饱和度
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.CAMERA_CONTROL, "param=" + SAT_PARAM + "&value=" + 128);  // 恢复出厂饱和度
+        } else if (id == R.id.setcamerapw_camera_btn) {
+            ToastUtil.ShowToast(getContext(), "请在登录页面输入即可！");
+        } else if (id == R.id.time_open_btn) {// 设置开启时间水印
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.SET_MISC, "osdenable=" + 1);  // 设置时间水印开启
+        } else if (id == R.id.time_off_btn) {// 设置关闭时间水印
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.SET_MISC, "osdenable=" + 0);  // 设置时间水印关闭
+        } else if (id == R.id.findface_open_btn) {// 开启人形追踪
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.TRANS_CMD_STRING, "cmd=2127&command=0&enable=1");  // 关闭人形追踪
+        } else if (id == R.id.findface_off_btn) {// 关闭人形追踪
+            cameraConntrol.cameraMiscControlPostHttp(IPCamera, cameraConntrol.TRANS_CMD_STRING, "cmd=2127&command=0&enable=0");  // 关闭人形追踪
+        } else if (id == R.id.findface_sen_btn) {// 设置人脸检测灵敏度
+            setFindfacesen();
         }
         vSimple(getContext(), 10);
     }

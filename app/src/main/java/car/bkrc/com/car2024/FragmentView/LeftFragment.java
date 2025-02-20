@@ -560,114 +560,105 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.switchover_phpto_btn: // 相机开关
-                if (playRTSPstate && !phone_cameraState) { // 播放状态下被点击，开启相机
-                    vlcPlayer.stop();
-                    vlcPlayer.pause();
-                    vlcPlayState = true;
+        int id = v.getId();
+        if (id == R.id.switchover_phpto_btn) { // 相机开关
+            if (playRTSPstate && !phone_cameraState) { // 播放状态下被点击，开启相机
+                vlcPlayer.stop();
+                vlcPlayer.pause();
+                vlcPlayState = true;
+                switchover_phpto_btn.setText(R.string.cut_car_camera);
+                scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
+                if (checkPermission()) {
+                    phone_cameraState = openCamera(cameraView, 1);
+                }
+            } else {
+                if (phone_cameraState && vlcPlayState) { // 暂停状态下启动相机后被点击，关闭相机，继续播放视频流
+                    switchover_phpto_btn.setText(R.string.cut_camera);
+                    scale_num_btn.setVisibility(View.VISIBLE); // 设置放大按钮为显示
+                    phone_cameraState = closeCamera(true);
+                    vlcPlayer.play();
+                    vlcPlayState = false;
+                } else if (phone_cameraState) { // RTSP未播放状态下相机启动后被点击，关闭相机
+                    switchover_phpto_btn.setText(R.string.cut_car_camera);
+                    scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
+                    phone_cameraState = closeCamera(true);
+                } else { // 未播放任何视频或图像内容时被点击，开启相机
                     switchover_phpto_btn.setText(R.string.cut_car_camera);
                     scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
                     if (checkPermission()) {
-                        phone_cameraState = openCamera(cameraView,1);
+                        phone_cameraState = openCamera(cameraView, 0);
                     }
+                }
+            }
+        } else if (id == R.id.camera_imbtn) {// 翻转摄像头
+            if (phone_cameraState) {
+                if (CAMERA_STATE == 0) {
+                    phone_cameraState = closeCamera(false);
+                    phone_cameraState = openCamera(cameraView, 1);
                 } else {
-                    if (phone_cameraState && vlcPlayState) { // 暂停状态下启动相机后被点击，关闭相机，继续播放视频流
-                        switchover_phpto_btn.setText(R.string.cut_camera);
-                        scale_num_btn.setVisibility(View.VISIBLE); // 设置放大按钮为显示
-                        phone_cameraState = closeCamera(true);
-                        vlcPlayer.play();
-                        vlcPlayState = false;
-                    } else if (phone_cameraState) { // RTSP未播放状态下相机启动后被点击，关闭相机
-                        switchover_phpto_btn.setText(R.string.cut_car_camera);
-                        scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
-                        phone_cameraState = closeCamera(true);
-                    } else { // 未播放任何视频或图像内容时被点击，开启相机
-                        switchover_phpto_btn.setText(R.string.cut_car_camera);
-                        scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
-                        if (checkPermission()) {
-                            phone_cameraState = openCamera(cameraView,0);
-                        }
-                    }
+                    phone_cameraState = closeCamera(false);
+                    phone_cameraState = openCamera(cameraView, 0);
                 }
-                break;
-            case R.id.camera_imbtn:
-                // 翻转摄像头
-                if (phone_cameraState){
-                    if (CAMERA_STATE == 0){
-                        phone_cameraState = closeCamera(false);
-                        phone_cameraState = openCamera(cameraView,1);
-                    }else {
-                        phone_cameraState = closeCamera(false);
-                        phone_cameraState = openCamera(cameraView,0);
-                    }
-                }else {
-                    phone_cameraState = openCamera(cameraView,1);
-                    switchover_phpto_btn.setText(R.string.cut_car_camera);
-                    scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
+            } else {
+                phone_cameraState = openCamera(cameraView, 1);
+                switchover_phpto_btn.setText(R.string.cut_car_camera);
+                scale_num_btn.setVisibility(View.GONE); // 设置放大按钮为隐藏
+            }
+        } else if (id == R.id.scale_phpto_btn) {  // 缩放点击控制
+            if (centerX == 0 && centerY == 0) {
+                centerX = textureView.getWidth() / 2;
+                centerY = textureView.getHeight() / 2;
+            }
+            if (scaleFactor > 4 && scaleFactor <= 5) {
+                if (scaleFactor == 5) {
+                    scaleFactor = 1;
+                } else {
+                    scaleFactor = 5;
                 }
-                break;
-            case R.id.scale_phpto_btn:  // 缩放点击控制
-                if (centerX == 0 && centerY == 0) {
-                    centerX = textureView.getWidth() / 2;
-                    centerY = textureView.getHeight() / 2;
+            } else if (scaleFactor > 3 && scaleFactor <= 4) {
+                if (scaleFactor == 4) {
+                    scaleFactor = 5;
+                } else {
+                    scaleFactor = 4;
                 }
-                if (scaleFactor > 4 && scaleFactor <= 5) {
-                    if (scaleFactor == 5) {
-                        scaleFactor = 1;
-                    } else {
-                        scaleFactor = 5;
-                    }
-                } else if (scaleFactor > 3 && scaleFactor <= 4) {
-                    if (scaleFactor == 4) {
-                        scaleFactor = 5;
-                    } else {
-                        scaleFactor = 4;
-                    }
-                } else if (scaleFactor > 2 && scaleFactor <= 3) {
-                    if (scaleFactor == 3) {
-                        scaleFactor = 4;
-                    } else {
-                        scaleFactor = 3;
-                    }
-                } else if (scaleFactor > 1 && scaleFactor <= 2) {
-                    if (scaleFactor == 2) {
-                        scaleFactor = 3;
-                    } else {
-                        scaleFactor = 2;
-                    }
-                } else if (scaleFactor == 1) {
+            } else if (scaleFactor > 2 && scaleFactor <= 3) {
+                if (scaleFactor == 3) {
+                    scaleFactor = 4;
+                } else {
+                    scaleFactor = 3;
+                }
+            } else if (scaleFactor > 1 && scaleFactor <= 2) {
+                if (scaleFactor == 2) {
+                    scaleFactor = 3;
+                } else {
                     scaleFactor = 2;
                 }
-                matrix.setScale(scaleFactor, scaleFactor, centerX, centerY);
-                textureView.setTransform(matrix);
-                setScaler(scaleFactor);
-                vSimple(requireContext(), 30); // 控制手机震动进行反馈
-                break;
-            case R.id.refresh_btn:
-            case R.id.refresh_img_btn:  // 刷新页面
-                ObjectrotationAnim(refershImageButton);
-                vSimple(requireContext(), 30); // 控制手机震动进行反馈
-                break;
-            case R.id.save_phpto:  // 保存图片信息
-                vSimple(requireContext(), 30); // 控制手机震动进行反馈
-                XcApplication.executorServicetor.execute(() -> {
-                    if (getBitmap() != null && !IPCamera.contains("null") && !phone_cameraState) {
-                        if (scaleFactor > 1) {
-                            saveBitmapAsJpg(getSDPath(), getBitmap());
-                        } else vlcPlayer.takeSnapShot(0, getSDPath(), 0, 0);
-                        FirstActivity.INSTANCE.runOnUiThread(() -> ToastUtil.ShowToast(getContext(), "图片成功保存在 " + getSDPath() + " 路径下"));
-                    } else if (phone_cameraState) {
+            } else if (scaleFactor == 1) {
+                scaleFactor = 2;
+            }
+            matrix.setScale(scaleFactor, scaleFactor, centerX, centerY);
+            textureView.setTransform(matrix);
+            setScaler(scaleFactor);
+            vSimple(requireContext(), 30); // 控制手机震动进行反馈
+        } else if (id == R.id.refresh_btn || id == R.id.refresh_img_btn) {  // 刷新页面
+            ObjectrotationAnim(refershImageButton);
+            vSimple(requireContext(), 30); // 控制手机震动进行反馈
+        } else if (id == R.id.save_phpto) {  // 保存图片信息
+            vSimple(requireContext(), 30); // 控制手机震动进行反馈
+            XcApplication.executorServicetor.execute(() -> {
+                if (getBitmap() != null && !IPCamera.contains("null") && !phone_cameraState) {
+                    if (scaleFactor > 1) {
                         saveBitmapAsJpg(getSDPath(), getBitmap());
-                        FirstActivity.INSTANCE.runOnUiThread(() -> ToastUtil.ShowToast(getContext(), "图片成功保存在 " + getSDPath() + " 路径下"));
-                    } else {
-                        FirstActivity.INSTANCE.runOnUiThread(() -> ToastUtil.ShowToast(getContext(), "请连接设备或打开相机！"));
-                    }
+                    } else vlcPlayer.takeSnapShot(0, getSDPath(), 0, 0);
+                    FirstActivity.INSTANCE.runOnUiThread(() -> ToastUtil.ShowToast(getContext(), "图片成功保存在 " + getSDPath() + " 路径下"));
+                } else if (phone_cameraState) {
+                    saveBitmapAsJpg(getSDPath(), getBitmap());
+                    FirstActivity.INSTANCE.runOnUiThread(() -> ToastUtil.ShowToast(getContext(), "图片成功保存在 " + getSDPath() + " 路径下"));
+                } else {
+                    FirstActivity.INSTANCE.runOnUiThread(() -> ToastUtil.ShowToast(getContext(), "请连接设备或打开相机！"));
+                }
 
-                });
-                break;
-            default:
-                break;
+            });
         }
     }
 

@@ -65,7 +65,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     @Override
     public void onClick(View v) {
         Bitmap picBitmap = LeftFragment.INSTANCE.getBitmap();
-        switch (v.getId()) {
+/*        switch (v.getId()) {
             case R.id.back_imbtn:
                 exitFragment();
                 break;
@@ -136,6 +136,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                 picrec_iv.setImageBitmap(null);
                 break;
             case R.id.picrec_iv:
+                
                 try {
                     if (((BitmapDrawable)picrec_iv.getDrawable()).getBitmap()!=null)
                     {
@@ -150,8 +151,72 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                 }
 
                 break;
-            default:
-                break;
+        }*/
+        int id = v.getId();
+
+        if (id == R.id.back_imbtn) {
+            exitFragment();
+        } else if (id == R.id.landmark_btn) {
+            // 处理识别标志物点击事件的代码
+            picrectext_tv.setText("识别标志物,需要二次开发！");
+            picrec_iv.setImageBitmap(picBitmap);
+        } else if (id == R.id.mask_all_btn) {
+            // 处理识别口罩点击事件的代码
+            picrectext_tv.setText("识别人脸佩戴口罩,需要二次开发！");
+            picrec_iv.setImageBitmap(picBitmap);
+        } else if (id == R.id.qr_all_btn) {
+            // 处理识别二维码点击事件的代码
+            picrectext_tv.setText("识别二维码");
+            picrec_iv.setImageBitmap(picBitmap);
+            QR_Recognition.QRRecognition(picBitmap, getContext(), picrectext_tv, picrec_iv);
+        } else if (id == R.id.carplate_all_btn) {
+            // 处理识别车牌识别点击事件的代码
+            picrectext_tv.setText("识别车牌号");
+            picrec_iv.setImageBitmap(picBitmap);
+            CarPlate.carTesseract(picBitmap, getContext(), picrectext_tv, picrec_iv);
+        } else if (id == R.id.ocrrec_all_btn) {
+            // 处理OCR识别点击事件的代码
+            picrectext_tv.setText("OCR文字识别,需要二次开发！");
+            picrec_iv.setImageBitmap(picBitmap);
+        } else if (id == R.id.tracfficrec_btn) {
+            // 处理交通灯识别点击事件的代码
+            picrectext_tv.setText("识别交通灯颜色");
+            picrec_iv.setImageBitmap(picBitmap);
+            TrafficUtils.HoughCircleCheck(picBitmap, getContext(), 0, picrectext_tv, picrec_iv);
+        } else if (id == R.id.cartype_all_btn) {
+            // 处理车型识别点击事件的代码
+            picrectext_tv.setText("识别车辆类型,需要二次开发！");
+            picrec_iv.setImageBitmap(picBitmap);
+        } else if (id == R.id.tracfficsign_all_btn) {
+            // 处理交通标识识别点击事件的代码
+            picrectext_tv.setText("识别交通标识,需要二次开发！");
+            picrec_iv.setImageBitmap(picBitmap);
+        } else if (id == R.id.graphic_color_btn) {
+            // 处理图形颜色识别点击事件的代码
+            picrectext_tv.setText("识别图形颜色,需要二次开发！");
+            picrec_iv.setImageBitmap(picBitmap);
+        } else if (id == R.id.graphic_shape_btn) {
+            // 处理图形形状识别点击事件的代码
+            picrectext_tv.setText("识别图形形状,需要二次开发！");
+        } else if (id == R.id.opencv_shape_btn) {
+            // 处理边缘检测点击事件
+            // recognitionShae(picBitmap);
+            // findMaxRect(canny(picBitmap));
+            // showImg(scanDocument(picBitmap));
+            findCorner(picBitmap);
+        } else if (id == R.id.vga_qr_btn) {
+            FirstActivity.Connect_Transport.qr_rec(1);
+        } else if (id == R.id.refresh_btn) {
+            picrectext_tv.setText("结果仅供参考！");
+            picrec_iv.setImageBitmap(null);
+        } else if (id == R.id.picrec_iv) {
+            try {
+                if (((BitmapDrawable) picrec_iv.getDrawable()).getBitmap() != null) {
+                    Full_screen.bigImageLoader(this.getContext(), ((BitmapDrawable) picrec_iv.getDrawable()).getBitmap());
+                }
+            } catch (Exception e) {
+                // 异常处理
+            }
         }
         vSimple(getContext(), 10);
     }

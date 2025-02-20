@@ -1,15 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.til.car_service">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-
         <service
-                android:name=".Service"
+                android:name="com.til.car_service.Service"
                 android:enabled="true"
                 android:exported="true"
                 android:permission="TODO">
         </service>
     </application>
-
 </manifest>
