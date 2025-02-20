@@ -451,7 +451,7 @@ public class FirstActivity extends AppCompatActivity {
     private void tryGetUsbPermission() {
 
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-        registerReceiver(mUsbPermissionActionReceiver, filter);
+        registerReceiver(mUsbPermissionActionReceiver, filter, Context.RECEIVER_EXPORTED);
         PendingIntent mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
 
         //here do emulation to ask all connected usb device for permission

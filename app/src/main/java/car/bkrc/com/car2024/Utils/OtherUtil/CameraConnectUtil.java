@@ -26,7 +26,7 @@ public class CameraConnectUtil {
         //广播接收器注册
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(A_S);
-        context.registerReceiver(myBroadcastReceiver, intentFilter);
+        context.registerReceiver(myBroadcastReceiver, intentFilter, Context.RECEIVER_EXPORTED);
     }
 
     public void cameraStopService(){
