@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import car.bkrc.com.car2024.Utils.dialog.RecDialog;
 import com.huawei.hmf.tasks.Task;
 import com.huawei.hms.mlsdk.common.MLFrame;
 import com.huawei.hms.mlsdk.dsc.MLDocumentSkewCorrectionAnalyzer;
@@ -189,6 +191,20 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             picrectext_tv.setText("识别二维码");
             picrec_iv.setImageBitmap(picBitmap);
             QR_Recognition.QRRecognition(picBitmap, getContext(), picrectext_tv, picrec_iv);
+            service.qrRecognitionAsync(picBitmap)
+                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                        if (result.getBarcodeList().isEmpty()) {
+                            picrectext_tv.setText("未识别到二维码！");
+                            RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
+                        }
+                        picrectext_tv.setText(result.getTotal());
+                        picrec_iv.setImageBitmap(result.getBitmap());
+                    }))
+                    .exceptionally(e -> {
+                        Log.e("QRRecognition", "Error: ", e);
+                        requireActivity().runOnUiThread(() -> picrectext_tv.setText("识别二维码失败：" + e));
+                        return null;
+                    });
         } else if (id == R.id.carplate_all_btn) {
             // 处理识别车牌识别点击事件的代码
             picrectext_tv.setText("识别车牌号");
@@ -201,7 +217,12 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                     .thenAccept(result -> requireActivity().runOnUiThread(() -> {
                         picrec_iv.setImageBitmap(result.getOutBitmap());
                         picrectext_tv.setText(CharactersUtil.removeSpecialCharactersExceptChinese(result.getOcrResult().getStrRes()));
-                    }));
+                    }))
+                    .exceptionally(e -> {
+                        Log.e("OCR", "OCR recognition failed", e);
+                        requireActivity().runOnUiThread(() -> picrectext_tv.setText("OCR识别失败:" + e.getMessage()));
+                        return null;
+                    });
         } else if (id == R.id.tracfficrec_btn) {
             // 处理交通灯识别点击事件的代码
             picrectext_tv.setText("识别交通灯颜色");
