@@ -12,17 +12,11 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CaptureRequest;
+import android.graphics.*;
+import android.hardware.camera2.*;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.opengl.EGL14;
@@ -31,11 +25,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Vibrator;
+import android.os.*;
 import android.util.Log;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -57,22 +47,25 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import car.bkrc.com.car2024.Utils.ImageToBitmapConverter;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import car.bkrc.com.car2024.ActivityView.FirstActivity;
 import car.bkrc.com.car2024.ActivityView.LoginActivity;
@@ -116,6 +109,8 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
     boolean phone_cameraState = false; // 相机启用状态
     boolean vlcPlayState = false;  // VLC播放状态,false为未暂停，true为暂停
 
+    private Handler backgroundHandler;
+
     @SuppressLint("SetTextI18n")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -133,15 +128,19 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
         INSTANCE = this;
         requestStoragePermission();
         cameraConnectUtil = new CameraConnectUtil(getContext());
+
+        backgroundHandler = new Handler();
+
         return view;
     }
 
 
     /**
      * 判断IP地址是否在同一网段
-     * @param ipAddress 地址
+     *
+     * @param ipAddress     地址
      * @param subnetAddress 对比的地址
-     * @param subnetMask 掩码
+     * @param subnetMask    掩码
      * @return 返回是否在同一网段
      * @throws UnknownHostException 防止未知错误
      */
@@ -154,7 +153,7 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
         byte[] subnetBytes = subnet.getAddress();
         byte[] maskBytes = mask.getAddress();
 
-        for (int i = 0; i < inetAddressBytes.length; i++) {
+        for(int i = 0; i < inetAddressBytes.length; i++) {
             int addressByte = inetAddressBytes[i] & 0xFF;
             int subnetByte = subnetBytes[i] & 0xFF;
             int maskByte = maskBytes[i] & 0xFF;
@@ -472,6 +471,133 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
         } else return textureView.getBitmap();
     }
 
+    protected Lock fileLock = new ReentrantLock();
+
+    public Bitmap getVlcPlayerHDBitmap() throws Exception {
+        String tempSDPath = getTempSDPath();
+        File directory = new File(tempSDPath);
+
+        fileLock.lock();
+        try {
+            // 删除文件
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for(File file : files) {
+                    if (file.isFile()) {
+                        if (!file.delete()) {
+                            throw new RuntimeException("Failed to delete file: " + file.getName());
+                        }
+                    }
+                }
+            }
+        } finally {
+            fileLock.unlock();
+        }
+
+        int maxAttempts = 5;
+        int attempt = 0;
+        File snapshotFile = null;
+
+        while (attempt < maxAttempts) {
+            attempt++;
+            // 捕获快照
+            vlcPlayer.takeSnapShot(0, tempSDPath, 0, 0);
+
+            // 轮询检查是否有新文件生成
+            boolean snapshotFound = false;
+            for(int i = 0; i <= 20; i++) {
+                File[] updatedFiles = directory.listFiles();
+                if (updatedFiles != null && updatedFiles.length > 0) {
+                    snapshotFound = true;
+                    snapshotFile = updatedFiles[0];
+                    break;
+                }
+                Thread.sleep(100);
+            }
+
+            if (snapshotFound) {
+                break;
+            }
+        }
+
+        if (snapshotFile == null || !snapshotFile.exists()) {
+            throw new RuntimeException("Snapshot file not found after " + maxAttempts + " attempts.");
+        }
+
+        fileLock.lock();
+        // 读取快照文件为Bitmap
+        try (FileInputStream fis = new FileInputStream(snapshotFile)) {
+            return BitmapFactory.decodeStream(fis);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read snapshot file: " + snapshotFile.getName(), e);
+        } finally {
+            fileLock.unlock();
+        }
+    }
+
+    public CompletableFuture<Bitmap> getCameraHDBitmapAsync() {
+        CompletableFuture<Bitmap> completableFuture = new CompletableFuture<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            completableFuture.orTimeout(10, TimeUnit.SECONDS);
+        }
+        try {
+
+            captureQueue.add(completableFuture);
+
+            CaptureRequest.Builder captureBuilder = opened_camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+
+            captureBuilder.addTarget(imageReader.getSurface());
+
+            // 设置 JPEG 质量（0-100，100为最高质量）
+            captureBuilder.set(CaptureRequest.JPEG_QUALITY, (byte) 100);
+
+            // 设置自动对焦和自动曝光
+            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+
+
+            cameraCaptureSession.capture(captureBuilder.build(), null, null);
+
+        } catch (Exception e) {
+            completableFuture.completeExceptionally(e);
+            throw new RuntimeException(e);
+        }
+
+        return completableFuture;
+
+    }
+
+
+    public CompletableFuture<Bitmap> getHDBitmapAsync() {
+        if (phone_cameraState) {
+            return getCameraHDBitmapAsync();
+        }
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                if (playRTSPstate && scaleFactor > 1) {
+                    return getVlcPlayerHDBitmap();
+                }
+                return textureView.getBitmap();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public static final String OUT = "BKRC_Car/temp";
+
+    public static String getTempSDPath() {
+        File mPicDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), OUT);
+        if (!mPicDir.exists()) {
+            if (mPicDir.mkdirs()) {
+                Log.d("ttt", "文件夹创建成功！！");
+            } else {
+                Log.d("ttt", "sdDir: 文件夹创建失败！！");
+            }
+        }
+        return mPicDir.getAbsolutePath();
+    }
+
     /**
      * 将bitmap保存为图片
      */
@@ -557,6 +683,7 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
     }
 
     private int CAMERA_STATE = 0;
+
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
@@ -670,8 +797,10 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
     static CaptureRequest.Builder requestBuilder;
     static CaptureRequest request;
     static Surface texture_surface;
+    static ImageReader imageReader;
+    static final Queue<CompletableFuture<Bitmap>> captureQueue = new LinkedBlockingQueue<>();
 
-    public boolean openCamera(TextureView cameraTextureView,int id) {
+    public boolean openCamera(TextureView cameraTextureView, int id) {
         // 将显示区域设置为可见，避免残影与RTSP冲突显示
         CAMERA_STATE = id;
         cameraTextureView.setVisibility(View.VISIBLE);
@@ -679,6 +808,24 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
         requireActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         // 1 创建相机管理器，调用系统相机
         cameraManager = (CameraManager) requireActivity().getSystemService(Context.CAMERA_SERVICE);
+        imageReader = ImageReader.newInstance(
+                2560, 1440,
+                ImageFormat.JPEG, 2
+        );
+        imageReader.setOnImageAvailableListener(reader -> {
+            Image image = reader.acquireLatestImage();
+            if (image == null) {
+                return;
+            }
+
+            CompletableFuture<Bitmap> poll = captureQueue.poll();
+            if (poll != null) {
+                poll.complete(ImageToBitmapConverter.jpegToBitmap(image));
+            }
+
+            image.close();
+
+        }, backgroundHandler); // 在后台线程处理
         // 2 准备 相机状态回调对象为后面用
         cam_stateCallback = new CameraDevice.StateCallback() {
             @Override
@@ -711,7 +858,7 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
                     // 设置矩阵变换，将相机获取到的图片进行旋转
                     cameraTextureView.setTransform(changeSize(cameraTextureView));
                     // 2.3 创建会话
-                    opened_camera.createCaptureSession(Collections.singletonList(texture_surface), cam_capture_session_stateCallback, null);
+                    opened_camera.createCaptureSession(List.of(texture_surface, imageReader.getSurface()), cam_capture_session_stateCallback, null);
                 } catch (CameraAccessException e) {
                     e.printStackTrace();
                 }
@@ -751,7 +898,7 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
             opened_camera.close();
             clearSurface(cameraView.getSurfaceTexture());
         }
-        if (anima){
+        if (anima) {
             AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f, 0.0f);
             alphaAnimation.setDuration(500); // 设置动画时长
             alphaAnimation.setAnimationListener(new Animation.AnimationListener() {

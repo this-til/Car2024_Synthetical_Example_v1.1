@@ -21,7 +21,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import car.bkrc.com.car2024.Utils.dialog.RecDialog;
 import com.huawei.hmf.tasks.Task;
 import com.huawei.hms.mlsdk.common.MLFrame;
 import com.huawei.hms.mlsdk.dsc.MLDocumentSkewCorrectionAnalyzer;
@@ -32,7 +31,7 @@ import com.huawei.hms.mlsdk.dsc.MLDocumentSkewCorrectionResult;
 import com.huawei.hms.mlsdk.dsc.MLDocumentSkewDetectResult;
 
 import com.til.car_service.Service;
-import com.til.car_service.data.CharacterRecognitionInput;
+import com.til.car_service.data.OcrInput;
 import com.til.car_service.util.CharactersUtil;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -48,13 +47,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import car.bkrc.com.car2024.ActivityView.FirstActivity;
 import car.bkrc.com.car2024.BitmapUtils.Full_screen;
 import car.bkrc.com.car2024.R;
 import car.bkrc.com.car2024.Utils.OtherUtil.ShapeRecognizeUtil;
-import car.bkrc.com.car2024.Utils.PicDisposeUtils.CarPlate;
-import car.bkrc.com.car2024.Utils.PicDisposeUtils.QR_Recognition;
 import car.bkrc.com.car2024.Utils.PicDisposeUtils.TrafficUtils;
 
 /**
@@ -86,169 +84,160 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
-        Bitmap picBitmap = LeftFragment.INSTANCE.getBitmap();
-/*        switch (v.getId()) {
-            case R.id.back_imbtn:
-                exitFragment();
-                break;
-            case R.id.landmark_btn:
-                // 处理识别标志物点击事件的代码
-                picrectext_tv.setText("识别标志物,需要二次开发！");
-                picrec_iv.setImageBitmap(picBitmap);
-                break;
-            case R.id.mask_all_btn:
-                // 处理识别口罩点击事件的代码
-                picrectext_tv.setText("识别人脸佩戴口罩,需要二次开发！");
-                picrec_iv.setImageBitmap(picBitmap);
-                break;
-            case R.id.qr_all_btn:
-                // 处理识别二维码点击事件的代码
-                picrectext_tv.setText("识别二维码");
-                picrec_iv.setImageBitmap(picBitmap);
-                QR_Recognition.QRRecognition(picBitmap, getContext(), picrectext_tv, picrec_iv);
-                break;
-            case R.id.carplate_all_btn:
-                // 处理识别车牌识别点击事件的代码
-                picrectext_tv.setText("识别车牌号");
-                picrec_iv.setImageBitmap(picBitmap);
-                CarPlate.carTesseract(picBitmap, getContext(), picrectext_tv, picrec_iv);
-                break;
-            case R.id.ocrrec_all_btn:
-                // 处理OCR识别点击事件的代码
-                picrectext_tv.setText("OCR文字识别,需要二次开发！");
-                picrec_iv.setImageBitmap(picBitmap);
-                break;
-            case R.id.tracfficrec_btn:
-                // 处理交通灯识别点击事件的代码
-                picrectext_tv.setText("识别交通灯颜色");
-                picrec_iv.setImageBitmap(picBitmap);
-                TrafficUtils.HoughCircleCheck(picBitmap, getContext(), 0, picrectext_tv, picrec_iv);
-                break;
-            case R.id.cartype_all_btn:
-                // 处理车型识别点击事件的代码
-                picrectext_tv.setText("识别车辆类型,需要二次开发！");
-                picrec_iv.setImageBitmap(picBitmap);
-                break;
-            case R.id.tracfficsign_all_btn:
-                // 处理交通标识识别点击事件的代码
-                picrectext_tv.setText("识别交通标识,需要二次开发！");
-                picrec_iv.setImageBitmap(picBitmap);
-                break;
-            case R.id.graphic_color_btn:
-                // 处理图形颜色识别点击事件的代码
-                picrectext_tv.setText("识别图形颜色,需要二次开发！");
-                picrec_iv.setImageBitmap(picBitmap);
-                break;
-            case R.id.graphic_shape_btn:
-                // 处理图形形状识别点击事件的代码
-                picrectext_tv.setText("识别图形形状,需要二次开发！");
-                break;
-            case R.id.opencv_shape_btn:
-                // 处理边缘检测点击事件
-//                recognitionShae(picBitmap);
-//                findMaxRect(canny(picBitmap));
-//                showImg(scanDocument(picBitmap));
-                findCorner(picBitmap);
-                break;
-            case R.id.vga_qr_btn:
-                FirstActivity.Connect_Transport.qr_rec(1);
-                break;
-            case R.id.refresh_btn:
-                picrectext_tv.setText("结果仅供参考！");
-                picrec_iv.setImageBitmap(null);
-                break;
-            case R.id.picrec_iv:
-                
-                try {
-                    if (((BitmapDrawable)picrec_iv.getDrawable()).getBitmap()!=null)
-                    {
-                        Full_screen.bigImageLoader(this.getContext(),((BitmapDrawable)picrec_iv.getDrawable()).getBitmap());
-                    }
-                    else {
-                        break;
-                    }
-                }catch (Exception e)
-                {
+        CompletableFuture<Bitmap> hdBitmapAsync = LeftFragment.INSTANCE.getHDBitmapAsync();
 
-                }
-
-                break;
-        }*/
         int id = v.getId();
-
         if (id == R.id.back_imbtn) {
             exitFragment();
         } else if (id == R.id.landmark_btn) {
-            // 处理识别标志物点击事件的代码
-            picrectext_tv.setText("识别标志物,需要二次开发！");
-            picrec_iv.setImageBitmap(picBitmap);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+
+                        });
+                        //TODO 识别标志物,需要二次开发！
+                        picrectext_tv.setText("识别标志物,需要二次开发！");
+                        picrec_iv.setImageBitmap(picBitmap);
+                        return picBitmap;
+                    });
         } else if (id == R.id.mask_all_btn) {
-            // 处理识别口罩点击事件的代码
-            picrectext_tv.setText("识别人脸佩戴口罩,需要二次开发！");
-            picrec_iv.setImageBitmap(picBitmap);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+
+                        });
+                        // TODO 处理识别口罩点击事件的代码
+                        picrectext_tv.setText("识别人脸佩戴口罩,需要二次开发！");
+                        picrec_iv.setImageBitmap(picBitmap);
+                        return picBitmap;
+                    });
         } else if (id == R.id.qr_all_btn) {
             // 处理识别二维码点击事件的代码
-            picrectext_tv.setText("识别二维码");
-            picrec_iv.setImageBitmap(picBitmap);
-            QR_Recognition.QRRecognition(picBitmap, getContext(), picrectext_tv, picrec_iv);
-            service.qrRecognitionAsync(picBitmap)
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+                            picrectext_tv.setText("识别二维码");
+                            picrec_iv.setImageBitmap(picBitmap);
+                        });
+                        return picBitmap;
+                    })
+                    .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
                     .thenAccept(result -> requireActivity().runOnUiThread(() -> {
                         if (result.getBarcodeList().isEmpty()) {
                             picrectext_tv.setText("未识别到二维码！");
-                            RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
+                            //RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
+                            return;
                         }
                         picrectext_tv.setText(result.getTotal());
-                        picrec_iv.setImageBitmap(result.getBitmap());
-                    }))
-                    .exceptionally(e -> {
-                        Log.e("QRRecognition", "Error: ", e);
-                        requireActivity().runOnUiThread(() -> picrectext_tv.setText("识别二维码失败：" + e));
-                        return null;
-                    });
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
         } else if (id == R.id.carplate_all_btn) {
-            // 处理识别车牌识别点击事件的代码
-            picrectext_tv.setText("识别车牌号");
-            picrec_iv.setImageBitmap(picBitmap);
-            CarPlate.carTesseract(picBitmap, getContext(), picrectext_tv, picrec_iv);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+                            picrectext_tv.setText("识别车牌号");
+                            picrec_iv.setImageBitmap(picBitmap);
+                        });
+                        return picBitmap;
+                    })
+                    .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
+                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                        if (result.getPlates().length == 0) {
+                            picrectext_tv.setText("未识别到车牌！");
+                            return;
+                        }
+                        picrectext_tv.setText(result.getTotal());
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
         } else if (id == R.id.ocrrec_all_btn) {
-            // 处理OCR识别点击事件的代码
-            picrec_iv.setImageBitmap(picBitmap);
-            service.ocrAsync(new CharacterRecognitionInput(picBitmap))
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+                            picrectext_tv.setText("识别车牌号");
+                            picrec_iv.setImageBitmap(picBitmap);
+                        });
+                        return picBitmap;
+                    })
+                    .thenCompose(picBitmap -> service.ocrAsync(new OcrInput(picBitmap)))
                     .thenAccept(result -> requireActivity().runOnUiThread(() -> {
                         picrec_iv.setImageBitmap(result.getOutBitmap());
                         picrectext_tv.setText(CharactersUtil.removeSpecialCharactersExceptChinese(result.getOcrResult().getStrRes()));
-                    }))
-                    .exceptionally(e -> {
-                        Log.e("OCR", "OCR recognition failed", e);
-                        requireActivity().runOnUiThread(() -> picrectext_tv.setText("OCR识别失败:" + e.getMessage()));
-                        return null;
-                    });
+                    }));
         } else if (id == R.id.tracfficrec_btn) {
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+                            picrectext_tv.setText("识别交通灯颜色");
+                            picrec_iv.setImageBitmap(picBitmap);
+                        });
+                        TrafficUtils.HoughCircleCheck(picBitmap, getContext(), 0, picrectext_tv, picrec_iv);
+                        return picBitmap;
+                    })
+                    .thenCompose(picBitmap -> service.trafficLightCheckAsync(picBitmap))
+                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                        picrec_iv.setImageBitmap(result.getOutImage());
+                        picrectext_tv.setText(result.getTotal());
+                    }));
             // 处理交通灯识别点击事件的代码
-            picrectext_tv.setText("识别交通灯颜色");
-            picrec_iv.setImageBitmap(picBitmap);
-            TrafficUtils.HoughCircleCheck(picBitmap, getContext(), 0, picrectext_tv, picrec_iv);
         } else if (id == R.id.cartype_all_btn) {
-            // 处理车型识别点击事件的代码
-            picrectext_tv.setText("识别车辆类型,需要二次开发！");
-            picrec_iv.setImageBitmap(picBitmap);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+
+                        });
+                        // TODO 处理车型识别点击事件的代码
+                        picrectext_tv.setText("识别车辆类型,需要二次开发！");
+                        picrec_iv.setImageBitmap(picBitmap);
+                        return picBitmap;
+                    });
+
         } else if (id == R.id.tracfficsign_all_btn) {
-            // 处理交通标识识别点击事件的代码
-            picrectext_tv.setText("识别交通标识,需要二次开发！");
-            picrec_iv.setImageBitmap(picBitmap);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+
+                        });
+                        //TODO 处理交通标识识别点击事件的代码
+                        picrectext_tv.setText("识别交通标识,需要二次开发！");
+                        picrec_iv.setImageBitmap(picBitmap);
+                        return picBitmap;
+                    });
+
         } else if (id == R.id.graphic_color_btn) {
-            // 处理图形颜色识别点击事件的代码
-            picrectext_tv.setText("识别图形颜色,需要二次开发！");
-            picrec_iv.setImageBitmap(picBitmap);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+
+                        });
+                        //TODO 处理图形颜色识别点击事件的代码
+                        picrectext_tv.setText("识别图形颜色,需要二次开发！");
+                        picrec_iv.setImageBitmap(picBitmap);
+                        return picBitmap;
+                    });
+
         } else if (id == R.id.graphic_shape_btn) {
-            // 处理图形形状识别点击事件的代码
-            picrectext_tv.setText("识别图形形状,需要二次开发！");
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+
+                        });
+                        //TODO 处理图形形状识别点击事件的代码
+                        picrectext_tv.setText("识别图形形状,需要二次开发！");
+                        return picBitmap;
+                    });
         } else if (id == R.id.opencv_shape_btn) {
-            // 处理边缘检测点击事件
-            // recognitionShae(picBitmap);
-            // findMaxRect(canny(picBitmap));
-            // showImg(scanDocument(picBitmap));
-            findCorner(picBitmap);
+            hdBitmapAsync
+                    .thenApply(picBitmap -> {
+                        requireActivity().runOnUiThread(() -> {
+                            picrectext_tv.setText("边缘检测");
+                            picrec_iv.setImageBitmap(picBitmap);
+                        });
+                        return picBitmap;
+                    })
+                    .thenCompose(picBitmap -> service.findCornerAsync(picBitmap))
+                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
         } else if (id == R.id.vga_qr_btn) {
             FirstActivity.Connect_Transport.qr_rec(1);
         } else if (id == R.id.refresh_btn) {
@@ -263,7 +252,12 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                 // 异常处理
             }
         }
-        vSimple(getContext(), 10);
+
+        hdBitmapAsync.thenRun(() -> vSimple(getContext(), 10));
+        hdBitmapAsync.exceptionally(e -> {
+            Log.e("Recognize", "recognition failed:", e);
+            return null;
+        });
     }
 
 
