@@ -14,5 +14,5 @@ public class QrRecognitionResult {
     List<Barcode> barcodeList;
     List<String> rawValueList;
     String total;
-    Bitmap bitmap;
+    Bitmap outBitmap;
 }
