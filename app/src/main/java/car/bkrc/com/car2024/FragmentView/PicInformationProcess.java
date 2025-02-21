@@ -1,11 +1,16 @@
 package car.bkrc.com.car2024.FragmentView;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.huawei.hmf.tasks.OnFailureListener;
-import com.huawei.hmf.tasks.OnSuccessListener;
+import car.bkrc.com.car2024.Utils.dialog.RecDialog;
 import com.huawei.hmf.tasks.Task;
 import com.huawei.hms.mlsdk.common.MLFrame;
 import com.huawei.hms.mlsdk.dsc.MLDocumentSkewCorrectionAnalyzer;
@@ -27,6 +31,9 @@ import com.huawei.hms.mlsdk.dsc.MLDocumentSkewCorrectionCoordinateInput;
 import com.huawei.hms.mlsdk.dsc.MLDocumentSkewCorrectionResult;
 import com.huawei.hms.mlsdk.dsc.MLDocumentSkewDetectResult;
 
+import com.til.car_service.Service;
+import com.til.car_service.data.CharacterRecognitionInput;
+import com.til.car_service.util.CharactersUtil;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -60,6 +67,21 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     private TextView picrectext_tv;
     // 识别结果图像
     private ImageView picrec_iv;
+
+    private Service service;
+
+    protected ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Service.ServiceBinder binder = (Service.ServiceBinder) service;
+            PicInformationProcess.this.service = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            service = null;
+        }
+    };
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -169,6 +191,20 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             picrectext_tv.setText("识别二维码");
             picrec_iv.setImageBitmap(picBitmap);
             QR_Recognition.QRRecognition(picBitmap, getContext(), picrectext_tv, picrec_iv);
+            service.qrRecognitionAsync(picBitmap)
+                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                        if (result.getBarcodeList().isEmpty()) {
+                            picrectext_tv.setText("未识别到二维码！");
+                            RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
+                        }
+                        picrectext_tv.setText(result.getTotal());
+                        picrec_iv.setImageBitmap(result.getBitmap());
+                    }))
+                    .exceptionally(e -> {
+                        Log.e("QRRecognition", "Error: ", e);
+                        requireActivity().runOnUiThread(() -> picrectext_tv.setText("识别二维码失败：" + e));
+                        return null;
+                    });
         } else if (id == R.id.carplate_all_btn) {
             // 处理识别车牌识别点击事件的代码
             picrectext_tv.setText("识别车牌号");
@@ -176,8 +212,17 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             CarPlate.carTesseract(picBitmap, getContext(), picrectext_tv, picrec_iv);
         } else if (id == R.id.ocrrec_all_btn) {
             // 处理OCR识别点击事件的代码
-            picrectext_tv.setText("OCR文字识别,需要二次开发！");
             picrec_iv.setImageBitmap(picBitmap);
+            service.ocrAsync(new CharacterRecognitionInput(picBitmap))
+                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                        picrectext_tv.setText(CharactersUtil.removeSpecialCharactersExceptChinese(result.getOcrResult().getStrRes()));
+                    }))
+                    .exceptionally(e -> {
+                        Log.e("OCR", "OCR recognition failed", e);
+                        requireActivity().runOnUiThread(() -> picrectext_tv.setText("OCR识别失败:" + e.getMessage()));
+                        return null;
+                    });
         } else if (id == R.id.tracfficrec_btn) {
             // 处理交通灯识别点击事件的代码
             picrectext_tv.setText("识别交通灯颜色");
@@ -239,6 +284,8 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent intent = new Intent(requireActivity(), Service.class);
+        requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -320,22 +367,22 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
         Bitmap showbitmap = Bitmap.createBitmap(mat.width(), mat.height(), Bitmap.Config.ARGB_8888);  // 生成新bitmap图像
         Utils.matToBitmap(mat, showbitmap);
         StringBuilder stringBuilder = new StringBuilder();
-        for (ShapeRecognizeUtil.Shape shape : sru.getShapeList()) {
+        for(ShapeRecognizeUtil.Shape shape : sru.getShapeList()) {
             stringBuilder.append(shape.name + shape.shape + " " + shape.w + " " + shape.h + "\n");
         }
         picrec_iv.setImageBitmap(showbitmap);
     }
 
     private Mat mSource;
+
     /**
      * canny算法，边缘检测
-
      */
     public Mat canny(Bitmap bitmap) {
         mSource = new Mat();
         Utils.bitmapToMat(bitmap, mSource);
         Mat grayMat = new Mat();
-        Imgproc.cvtColor(mSource,grayMat,Imgproc.COLOR_BGR2GRAY);//转换成灰度图
+        Imgproc.cvtColor(mSource, grayMat, Imgproc.COLOR_BGR2GRAY);//转换成灰度图
         Mat mat = mSource.clone();
         Imgproc.Canny(mSource, mat, 50, 200);
         return mat;
@@ -344,8 +391,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     /**
      * 返回边缘检测之后的最大矩形,并返回
      *
-     * @param cannyMat
-     *            Canny之后的mat矩阵
+     * @param cannyMat Canny之后的mat矩阵
      * @return
      */
     public Rect findMaxRect(Mat cannyMat) {
@@ -357,7 +403,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
         int index = 0;
         double perimeter = 0;
         // 找出匹配到的最大轮廓
-        for (int i = 0; i < contours.size(); i++) {
+        for(int i = 0; i < contours.size(); i++) {
             // 最大面积,进行轮廓准确提取后，判断面积是较为理想的方案
             // double area = Imgproc.contourArea(contours.get(i));
             //最大周长
@@ -369,9 +415,9 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                 contours.add(contours.get(0)); // 将第一个点复制到末尾
             }
             double area = Imgproc.contourArea(contours.get(i));
-            double length = Imgproc.arcLength(source,true);
-            if(area>perimeter){
-                perimeter =  area;
+            double length = Imgproc.arcLength(source, true);
+            if (area > perimeter) {
+                perimeter = area;
                 index = i;
             }
         }
@@ -416,9 +462,10 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
 
     /**
      * 显示图像
+     *
      * @param mat
      */
-    private void showImg(Mat mat){
+    private void showImg(Mat mat) {
 
         Bitmap bitmap = Bitmap.createBitmap(mat.width(), mat.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(mat, bitmap);
@@ -441,7 +488,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
 
         // Canny边缘检测
         Mat edges = new Mat();
-        Imgproc.Canny(blurred, edges, 50, 200,3);
+        Imgproc.Canny(blurred, edges, 50, 200, 3);
 
         // 查找轮廓
         List<MatOfPoint> contours = new ArrayList<>();
@@ -451,7 +498,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
         // 对找到的轮廓进行多边形拟合，并寻找最大的四边形
         double maxArea = 0;
         MatOfPoint2f biggest = new MatOfPoint2f();
-        for (int i = 0; i < contours.size(); i++) {
+        for(int i = 0; i < contours.size(); i++) {
             if (!contours.get(0).equals(contours.get(contours.size() - 1))) {
                 // 如果轮廓不是闭合的，将其闭合
                 contours.add(contours.get(0)); // 将第一个点复制到末尾
@@ -484,7 +531,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
 
         // 计算质心
         Point center = new Point(0, 0);
-        for (Point pt : ptsArray) {
+        for(Point pt : ptsArray) {
             center.x += pt.x;
             center.y += pt.y;
         }
@@ -496,7 +543,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
         List<Point> leftPoints = new ArrayList<>();
         List<Point> rightPoints = new ArrayList<>();
 
-        for (Point pt : ptsArray) {
+        for(Point pt : ptsArray) {
             if (pt.x < center.x) {
                 leftPoints.add(pt);
             } else {
@@ -531,7 +578,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     MLDocumentSkewCorrectionAnalyzerSetting setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
     MLDocumentSkewCorrectionAnalyzer analyzer = MLDocumentSkewCorrectionAnalyzerFactory.getInstance().getDocumentSkewCorrectionAnalyzer(setting);
 
-    private void findCorner(Bitmap bitmap){
+    private void findCorner(Bitmap bitmap) {
         MLFrame frame = MLFrame.fromBitmap(bitmap);
         // asyncDocumentSkewDetect异步调用。
         Task<MLDocumentSkewDetectResult> detectTask = analyzer.asyncDocumentSkewDetect(frame);
@@ -546,15 +593,15 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             coordinates.add(rightTop);
             coordinates.add(rightBottom);
             coordinates.add(leftBottom);
-            appliance(frame,new MLDocumentSkewCorrectionCoordinateInput(coordinates));
+            appliance(frame, new MLDocumentSkewCorrectionCoordinateInput(coordinates));
         }).addOnFailureListener(e -> {
             // 检测失败。
         });
     }
 
-    private void appliance(MLFrame frame,MLDocumentSkewCorrectionCoordinateInput coordinateData){
+    private void appliance(MLFrame frame, MLDocumentSkewCorrectionCoordinateInput coordinateData) {
         // asyncDocumentSkewCorrect异步调用。
-        try{
+        try {
             Task<MLDocumentSkewCorrectionResult> correctionTask = analyzer.asyncDocumentSkewCorrect(frame, coordinateData);
             correctionTask.addOnSuccessListener(refineResult -> {
                 // 检测成功。
@@ -562,7 +609,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             }).addOnFailureListener(e -> {
                 // 检测失败。
             });
-        }catch (Exception ignored){
+        } catch (Exception ignored) {
         }
 
     }

@@ -67,8 +67,8 @@ public class Service extends android.app.Service {
         OcrResult detect = ocrEngine.detect(
                 bitmap,
                 outBitmap,
-                characterRecognitionInput.getMaxSideLen(),
                 characterRecognitionInput.getPadding(),
+                characterRecognitionInput.getMaxSideLen(),
                 characterRecognitionInput.getBoxScoreThresh(),
                 characterRecognitionInput.getBoxThresh(),
                 characterRecognitionInput.getUnClipRatio(),
