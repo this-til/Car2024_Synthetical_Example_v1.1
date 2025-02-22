@@ -71,6 +71,7 @@ dependencies {
     implementation project(':openCVLibrary343')
     implementation project(':service')
     implementation project(':ocr')
+//    implementation project(':yolov8Module')
     
     implementation files('libs/usbSerialForAndroid-debug.aar')
     implementation files('libs/libvlc-all-3.3.0-eap17.aar')

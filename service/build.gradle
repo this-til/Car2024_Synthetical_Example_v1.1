@@ -54,4 +54,5 @@ dependencies {
 
     implementation project(':ocr')
     implementation project(':openCVLibrary343')
+    implementation project(':yolov8Module')
 }
