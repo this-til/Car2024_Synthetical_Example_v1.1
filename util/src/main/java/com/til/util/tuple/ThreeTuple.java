@@ -1,13 +1,15 @@
-package com.til.car_service.tuple;
+package com.til.util.tuple;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class TwoTuple<A, B> {
+@NoArgsConstructor
+public class ThreeTuple<A, B, C>  {
     private A a;
     private B b;
+    private C c;
 }

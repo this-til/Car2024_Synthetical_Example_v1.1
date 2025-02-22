@@ -1,0 +1,41 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.til.cat_service'
+    compileSdk compile_sdk_version
+    ndkVersion ndk_version
+
+    defaultConfig {
+        minSdk min_sdk_version
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility source_compatibility
+        targetCompatibility target_compatibility
+    }
+    buildToolsVersion build_tool_version
+}
+
+dependencies {
+
+    implementation project(':openCVLibrary343')
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    implementation 'com.google.android.gms:play-services-tasks:18.0.2'
+    implementation 'com.huawei.hmf:tasks:1.5.2.206'
+
+
+}

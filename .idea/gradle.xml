@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/ocr" />
             <option value="$PROJECT_DIR$/openCVLibrary343" />
             <option value="$PROJECT_DIR$/service" />
+            <option value="$PROJECT_DIR$/util" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

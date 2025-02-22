@@ -11,8 +11,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class QrRecognitionResult {
-    List<Barcode> barcodeList;
-    List<String> rawValueList;
+    Barcode[] barcodes;
+    String[] rawValues;
     String total;
     Bitmap outBitmap;
 }

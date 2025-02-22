@@ -32,7 +32,7 @@ import com.huawei.hms.mlsdk.dsc.MLDocumentSkewDetectResult;
 
 import com.til.car_service.Service;
 import com.til.car_service.data.OcrInput;
-import com.til.car_service.util.CharactersUtil;
+import com.til.util.CharactersUtil;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -123,7 +123,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                     })
                     .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
                     .thenAccept(result -> requireActivity().runOnUiThread(() -> {
-                        if (result.getBarcodeList().isEmpty()) {
+                        if (result.getBarcodes().length==0) {
                             picrectext_tv.setText("未识别到二维码！");
                             //RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
                             return;
