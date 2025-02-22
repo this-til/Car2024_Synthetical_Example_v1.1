@@ -6,11 +6,11 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import com.benjaminwan.ocrlibrary.OcrEngine;
-import com.benjaminwan.ocrlibrary.OcrResult;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
+import com.huawei.hmf.tasks.Task;
 import com.huawei.hms.mlsdk.common.MLFrame;
 import com.huawei.hms.mlsdk.dsc.*;
 import com.hyperai.hyperlpr3.HyperLPR3;
@@ -18,7 +18,7 @@ import com.hyperai.hyperlpr3.bean.Plate;
 import com.til.car_service.data.*;
 import com.til.car_service.tuple.ThreeTuple;
 import com.til.car_service.tuple.TwoTuple;
-import com.til.car_service.util.TaskToFuture;
+import com.til.car_service.util.TaskUtil;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -29,6 +29,7 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class Service extends android.app.Service {
 
@@ -72,17 +73,17 @@ public class Service extends android.app.Service {
     /***
      * ocr文字识别-异步
      */
-    public CompletableFuture<CharacterRecognitionResult> ocrAsync(OcrInput characterRecognitionInput) {
+    public CompletableFuture<OcrResult> ocrAsync(OcrInput characterRecognitionInput) {
         return CompletableFuture.supplyAsync(() -> ocr(characterRecognitionInput));
     }
 
     /***
      * ocr文字识别
      */
-    public CharacterRecognitionResult ocr(OcrInput characterRecognitionInput) {
+    public OcrResult ocr(OcrInput characterRecognitionInput) {
         Bitmap bitmap = characterRecognitionInput.getBitmap();
         Bitmap outBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        OcrResult detect = ocrEngine.detect(
+        com.benjaminwan.ocrlibrary.OcrResult detect = ocrEngine.detect(
                 bitmap,
                 outBitmap,
                 characterRecognitionInput.getPadding(),
@@ -93,7 +94,7 @@ public class Service extends android.app.Service {
                 characterRecognitionInput.isDoAngle(),
                 characterRecognitionInput.isMostAngle()
         );
-        return new CharacterRecognitionResult(outBitmap, detect);
+        return new OcrResult(outBitmap, detect);
     }
 
     /***
@@ -102,7 +103,7 @@ public class Service extends android.app.Service {
     public CompletableFuture<QrRecognitionResult> qrRecognitionAsync(Bitmap bitmap) {
         return CompletableFuture
                 .supplyAsync(() -> InputImage.fromBitmap(bitmap, 0))
-                .thenCompose(image -> TaskToFuture.convert(scanner.process(image)))
+                .thenCompose(image -> TaskUtil.convert(scanner.process(image)))
                 .thenApply(list -> {
                     if (list == null) {
                         return null;
@@ -149,7 +150,7 @@ public class Service extends android.app.Service {
     /***
      * 车牌识别同步
      */
-    public CarTesseractResult carTesseract(Bitmap bitmap) {
+    public LicensePlatesRecognitionResult licensePlatesRecognition(Bitmap bitmap) {
         Bitmap bcopy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Bitmap copyShow = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
@@ -185,24 +186,23 @@ public class Service extends android.app.Service {
             };
         }
 
-        return new CarTesseractResult(plates, licensePlates, copyShow, String.join("\n", licensePlates));
+        return new LicensePlatesRecognitionResult(plates, licensePlates, copyShow, String.join("\n", licensePlates));
     }
 
     /***
      * 车牌识别异步
      */
-    public CompletableFuture<CarTesseractResult> carTesseractAsync(Bitmap bitmap) {
-        return CompletableFuture.supplyAsync(() -> carTesseract(bitmap));
+    public CompletableFuture<LicensePlatesRecognitionResult> carTesseractAsync(Bitmap bitmap) {
+        return CompletableFuture.supplyAsync(() -> licensePlatesRecognition(bitmap));
     }
 
     /***
      * 边缘检测
      */
     public CompletableFuture<FindCornerResult> findCornerAsync(Bitmap bitmap) {
-      /*  return CompletableFuture.supplyAsync(() -> MLFrame.fromBitmap(bitmap))
-                .thenCompose(frame -> TaskToFuture.convert(analyzer.asyncDocumentSkewDetect(frame)))
-                .thenCompose(result -> TaskToFuture.convert(analyzer.asyncDocumentSkewDetect(frame, coordinateData)) );*/
-        return CompletableFuture.supplyAsync(() -> MLFrame.fromBitmap(bitmap))
+        
+        
+       /* return CompletableFuture.supplyAsync(() -> MLFrame.fromBitmap(bitmap))
                 .thenApply(frame -> new TwoTuple<>(frame, analyzer.asyncDocumentSkewDetect(frame).getResult()))
                 .thenApply(tuple -> {
                     MLDocumentSkewDetectResult result = tuple.getB();
@@ -218,11 +218,70 @@ public class Service extends android.app.Service {
                     return new ThreeTuple<>(tuple.getA(), result, new MLDocumentSkewCorrectionCoordinateInput(coordinates));
                 })
                 .thenApply(tuple -> new ThreeTuple<>(tuple.getA(), tuple.getB(), analyzer.asyncDocumentSkewCorrect(tuple.getA(), tuple.getC()).getResult()))
-                .thenApply(tuple -> new FindCornerResult(tuple.getB(), tuple.getC(), tuple.getC().getCorrected()));
+                .thenApply(tuple -> new FindCornerResult(tuple.getB(), tuple.getC(), tuple.getC().getCorrected()));*/
 
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                MLFrame frame = MLFrame.fromBitmap(bitmap);
+                MLDocumentSkewDetectResult mlDocumentSkewDetectResult = TaskUtil.getResultSync(analyzer.asyncDocumentSkewDetect(frame), 5, TimeUnit.SECONDS);
+                MLDocumentSkewCorrectionResult mlDocumentSkewCorrectionResult = TaskUtil.getResultSync(
+                        analyzer.asyncDocumentSkewCorrect(
+                                frame,
+                                new MLDocumentSkewCorrectionCoordinateInput(
+                                        List.of(
+                                                mlDocumentSkewDetectResult.getLeftTopPosition(),
+                                                mlDocumentSkewDetectResult.getRightTopPosition(),
+                                                mlDocumentSkewDetectResult.getLeftBottomPosition(),
+                                                mlDocumentSkewDetectResult.getRightBottomPosition()
+                                        )
+                                )
+                        ),
+                        5,
+                        TimeUnit.SECONDS);
+                
+                return new FindCornerResult(frame, mlDocumentSkewDetectResult, mlDocumentSkewCorrectionResult, mlDocumentSkewCorrectionResult.getCorrected());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+      /*  return CompletableFuture.supplyAsync(() -> MLFrame.fromBitmap(bitmap))
+                .thenApply(frame -> {
+                    Task<MLDocumentSkewDetectResult> mlDocumentSkewDetectResultTask = analyzer.asyncDocumentSkewDetect(frame);
+                    try {
+                        mlDocumentSkewDetectResultTask.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return new TwoTuple<>(frame, mlDocumentSkewDetectResultTask.getResult());
+                })
+                .thenApply(tuple -> {
+                    MLDocumentSkewDetectResult result = tuple.getB();
+                    android.graphics.Point leftTop = result.getLeftTopPosition();
+                    android.graphics.Point rightTop = result.getRightTopPosition();
+                    android.graphics.Point leftBottom = result.getLeftBottomPosition();
+                    android.graphics.Point rightBottom = result.getRightBottomPosition();
+                    List<android.graphics.Point> coordinates = new ArrayList<>();
+                    coordinates.add(leftTop);
+                    coordinates.add(rightTop);
+                    coordinates.add(rightBottom);
+                    coordinates.add(leftBottom);
+                    return new ThreeTuple<>(tuple.getA(), result, new MLDocumentSkewCorrectionCoordinateInput(coordinates));
+                })
+                .thenApply(tuple -> {
+                    Task<MLDocumentSkewCorrectionResult> mlDocumentSkewCorrectionResultTask = analyzer.asyncDocumentSkewCorrect(tuple.getA(), tuple.getC());
+                    try {
+                        mlDocumentSkewCorrectionResultTask.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return new ThreeTuple<>(tuple.getA(), tuple.getB(), mlDocumentSkewCorrectionResultTask.getResult());
+                })
+                .thenApply(tuple -> new FindCornerResult(tuple.getB(), tuple.getC(), tuple.getC().getCorrected()));*/
     }
 
-
+    /***
+     * 红路灯检测
+     */
     public TrafficLightCheckResult trafficLightCheck(Bitmap bitmap) {
         int red = 0, yellow = 0, green = 0;
         // 进行霍夫圆检测

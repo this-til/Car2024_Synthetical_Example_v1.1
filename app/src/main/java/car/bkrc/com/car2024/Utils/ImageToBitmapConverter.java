@@ -62,7 +62,7 @@ public class ImageToBitmapConverter {
 
         return bmpout;
     }
-    
+
     public static Bitmap jpegToBitmap(Image image) {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.remaining()];
@@ -72,7 +72,6 @@ public class ImageToBitmapConverter {
         Bitmap inBitmap = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inBitmap = inBitmap;
-        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, opts);
-        return bitmap ;
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, opts);
     }
 }

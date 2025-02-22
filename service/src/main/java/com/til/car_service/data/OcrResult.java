@@ -1,13 +1,12 @@
 package com.til.car_service.data;
 
 import android.graphics.Bitmap;
-import com.benjaminwan.ocrlibrary.OcrResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class CharacterRecognitionResult {
+public class OcrResult {
     private Bitmap outBitmap;
-    private OcrResult ocrResult;
+    private com.benjaminwan.ocrlibrary.OcrResult ocrResult;
 }

@@ -153,7 +153,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             hdBitmapAsync
                     .thenApply(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("识别车牌号");
+                            picrectext_tv.setText("ocr识别");
                             picrec_iv.setImageBitmap(picBitmap);
                         });
                         return picBitmap;
