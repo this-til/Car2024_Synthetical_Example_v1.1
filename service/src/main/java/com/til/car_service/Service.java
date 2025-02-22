@@ -2,6 +2,7 @@ package com.til.car_service;
 
 import android.content.Intent;
 import android.graphics.*;
+import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -10,21 +11,20 @@ import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
-import com.huawei.hmf.tasks.Task;
 import com.huawei.hms.mlsdk.common.MLFrame;
 import com.huawei.hms.mlsdk.dsc.*;
 import com.hyperai.hyperlpr3.HyperLPR3;
 import com.hyperai.hyperlpr3.bean.Plate;
 import com.til.car_service.data.*;
-import com.til.car_service.tuple.ThreeTuple;
-import com.til.car_service.tuple.TwoTuple;
-import com.til.car_service.util.TaskUtil;
+import com.til.util.PointUtil;
+import com.til.util.TaskUtil;
+import com.til.util.tuple.Ptr;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
+import org.opencv.video.BackgroundSubtractorMOG2;
+import org.opencv.video.Video;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +114,9 @@ public class Service extends android.app.Service {
                         return null;
                     }
 
-                    List<String> rawValueList = new ArrayList<>(list.size());
+                    Barcode[] barcodes = new Barcode[list.size()];
+                    String[] rawValues = new String[list.size()];
+
                     StringBuilder stringBuilder = new StringBuilder();
                     Bitmap outBitmap = Bitmap.createBitmap(bitmap);
                     Canvas canvas = new Canvas(outBitmap);
@@ -122,7 +124,9 @@ public class Service extends android.app.Service {
                     for(int i = 0; i < list.size(); i++) {
                         Barcode barcode = list.get(i);
 
-                        rawValueList.add(barcode.getRawValue());
+                        barcodes[i] = barcode;
+                        rawValues[i] = barcode.getRawValue();
+
                         stringBuilder.append("二维码").append(i).append(':').append(' ').append(barcode.getRawValue()).append('\n');
 
 
@@ -143,8 +147,8 @@ public class Service extends android.app.Service {
                     }
 
                     return new QrRecognitionResult(
-                            list,
-                            rawValueList,
+                            barcodes,
+                            rawValues,
                             stringBuilder.toString(),
                             outBitmap
                     );
@@ -243,7 +247,7 @@ public class Service extends android.app.Service {
                         ),
                         5,
                         TimeUnit.SECONDS);
-                
+
                 return new FindCornerResult(frame, mlDocumentSkewDetectResult, mlDocumentSkewCorrectionResult, mlDocumentSkewCorrectionResult.getCorrected());
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -361,9 +365,169 @@ public class Service extends android.app.Service {
 
     }
 
-
+    /***
+     * 红路灯检测异步
+     */
     public CompletableFuture<TrafficLightCheckResult> trafficLightCheckAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> trafficLightCheck(bitmap));
     }
+
+    /***
+     * 形状检测
+     */
+    public ShapeDetectionResult shapeDetection(ShapeDetectionInput shapeDetectionInput)  {
+        int width = shapeDetectionInput.getBitmap().getWidth();
+        int height = shapeDetectionInput.getBitmap().getHeight();
+
+        Mat mat = new Mat(width, height, CvType.CV_8UC4);
+        Mat outMat = new Mat(width, height, CvType.CV_8UC4);
+        org.opencv.android.Utils.bitmapToMat(shapeDetectionInput.getBitmap(), mat);
+        org.opencv.android.Utils.bitmapToMat(shapeDetectionInput.getBitmap(), outMat);
+
+        Mat fgMask = new Mat();
+        BackgroundSubtractorMOG2 bgSubtractor = Video.createBackgroundSubtractorMOG2();
+        bgSubtractor.apply(mat, fgMask);
+
+        Mat prospect = new Mat();
+        Core.bitwise_and(mat, fgMask, prospect);
+
+        //灰度图
+        Mat grayscale = new Mat();
+        Imgproc.cvtColor(prospect, grayscale, Imgproc.COLOR_BGR2GRAY);
+
+        //高斯模糊
+        Mat blurredMat = new Mat();
+        Imgproc.GaussianBlur(grayscale, blurredMat, new Size(5, 5), 0);
+
+        //二值化
+        Mat binarization = new Mat();
+        Imgproc.Canny(blurredMat, binarization, shapeDetectionInput.getMinThreshold(), shapeDetectionInput.getMaxThreshold(), 3);
+
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));//  指定腐蚀膨胀核
+        Mat kerneled = new Mat();
+        Imgproc.dilate(binarization, kerneled, kernel);
+
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        List<MatOfPoint> _contours = new ArrayList<>();
+        List<ShapeDetectionResult.ShapeDescribe> resultList = new ArrayList<>();
+
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(kerneled, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//查找轮廓
+        double maxSize = width * height;
+        
+        for(int i = 0; i < contours.size(); i++) {
+            double area = Imgproc.contourArea(contours.get(i));
+            if (area / maxSize > shapeDetectionInput.getMinJudgmentRange()) {
+                continue;
+            }
+            if (area > shapeDetectionInput.getMinShapeArea()) {
+                continue;
+            }
+            contours.remove(i);
+            i--;
+        }
+
+        Mat repeatMask = new Mat(mat.size(), CvType.CV_8UC1);
+
+        for(MatOfPoint contour : contours) {
+            Core.multiply(contour, shapeDetectionInput.getEnlarge(), contour);
+
+            MatOfPoint2f newcoutour = new MatOfPoint2f(contour.toArray());
+            MatOfPoint2f resultcoutour = new MatOfPoint2f();
+            Imgproc.approxPolyDP(newcoutour, resultcoutour, 0.01 * Imgproc.arcLength(newcoutour, true), true);
+            contour = new MatOfPoint(resultcoutour.toArray());
+            // 进行修正，缩小4倍改变联通区域大小
+            Core.multiply(contour, new Scalar(1 / shapeDetectionInput.getEnlarge().val[0], 1 / shapeDetectionInput.getEnlarge().val[1]), contour);
+            //轮廓的面积
+            double area = Imgproc.contourArea(contour);
+
+
+            // 求取中心点
+            Moments mm = Imgproc.moments(contour);
+            int center_x = (int) (mm.get_m10() / (mm.get_m00()));
+            int center_y = (int) (mm.get_m01() / (mm.get_m00()));
+            org.opencv.core.Point center = new org.opencv.core.Point(center_x, center_y);
+
+            //最小外接矩形
+            org.opencv.core.Rect rect = Imgproc.boundingRect(contour);
+            //最小外接矩形面积
+            //轮廓的面积/最小外接矩形面积(一个圆和一个圆的外接矩形)  一小于1
+            if (Math.abs((area / rect.area())) < shapeDetectionInput.getMinShapeRange()) {
+                continue;
+            }
+
+            double wh = rect.size().width / rect.size().height;//宽高比值
+
+            if (wh > shapeDetectionInput.getConstraintAspectRatio() || wh < 1 / shapeDetectionInput.getConstraintAspectRatio()) {
+                continue;
+            }
+
+            Mat mask = Mat.zeros(mat.size(), CvType.CV_8UC1);
+            Imgproc.drawContours(mask, List.of(contour), -1, new Scalar(255), Core.FILLED);
+
+            Mat overlapMask = new Mat(mat.size(), CvType.CV_8UC1);
+            Core.bitwise_and(repeatMask, mask, overlapMask);
+            double overlapArea = Core.countNonZero(overlapMask);
+            if (overlapArea / Core.countNonZero(mask) > shapeDetectionInput.getMaxOverlapArea()) {
+                continue;
+            }
+
+            Core.bitwise_or(repeatMask, mask, repeatMask);
+
+            Scalar shapeColor = Core.mean(mat, mask);
+
+            Ptr<Float> similarPtr = new Ptr<>(Float.MAX_VALUE);
+            ColorType colorType = ColorType.typGetSimilarColor(shapeColor, similarPtr);
+
+            if (similarPtr.getT() > shapeDetectionInput.getMinColorDistance()) {
+                continue;
+            }
+
+
+            List<org.opencv.core.Point> list = contour.toList();
+
+            list = PointUtil.removeClosePoints(list, shapeDetectionInput.getMinPosInterval());
+
+            if (list.size() < 3) {
+                continue;
+            }
+
+
+            List<PointLink> pointLinkList = new ArrayList<>();
+            for(int i = 0; i < list.size(); i++) {
+                int previous_i = (i - 1) < 0 ? list.size() - 1 : i - 1;
+                int next_i = (i + 1) >= list.size() ? 0 : (i + 1);
+                pointLinkList.add(PointLink.create(list.get(previous_i), list.get(i), list.get(next_i), () -> pointLinkList.get(previous_i), () -> pointLinkList.get(next_i)));
+            }
+
+            ShapeType shapeType = null;
+            for(ShapeType value : ShapeType.values()) {
+                if (value.recognition(mat, contour, list, pointLinkList, shapeDetectionInput, center)) {
+                    shapeType = value;
+                    break;
+                }
+            }
+            if (shapeType == null) {
+                continue;
+            }
+            resultList.add(new ShapeDetectionResult.ShapeDescribe(shapeType, colorType, contour));
+            _contours.add(contour);
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Imgproc.drawContours(outMat, _contours, -1, new Scalar(255, 0, 0), 5);
+        org.opencv.android.Utils.matToBitmap(outMat, bitmap);
+        return new ShapeDetectionResult(resultList.toArray(new ShapeDetectionResult.ShapeDescribe[0]), bitmap);
+
+    }
+
+    /***
+     * 形状检测-异步
+     */
+    public CompletableFuture<ShapeDetectionResult> shapeDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
+        return CompletableFuture.supplyAsync(() -> shapeDetection(shapeDetectionInput));
+    }
+
 
 }

@@ -1,4 +1,4 @@
-package com.til.car_service.tuple;
+package com.til.util.tuple;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
