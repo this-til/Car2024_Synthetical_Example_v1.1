@@ -52,10 +52,15 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        LibraryLoader.initLibraries();
+        
         ocrEngine = new OcrEngine(this);
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
         analyzer = MLDocumentSkewCorrectionAnalyzerFactory.getInstance().getDocumentSkewCorrectionAnalyzer(setting);
+        
+        
     }
 
     @Override

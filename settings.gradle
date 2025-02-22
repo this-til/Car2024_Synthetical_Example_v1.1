@@ -51,5 +51,5 @@ include ':app'
 include ':openCVLibrary343'
 include ':service'
 include ':ocr'
-include 'util'
-
+include ':util'
+include ':yolov8Module'
