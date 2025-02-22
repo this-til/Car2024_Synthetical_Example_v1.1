@@ -1,4 +1,4 @@
-﻿package com.til.car_service.data;
+package com.til.car_service.data;
 
 import android.graphics.Bitmap;
 import lombok.Data;

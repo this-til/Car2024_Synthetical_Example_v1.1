@@ -52,16 +52,17 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        LibraryLoader.initLibraries();
         
         ocrEngine = new OcrEngine(this);
+        System.loadLibrary("yolov8ncnn");
+
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
         analyzer = MLDocumentSkewCorrectionAnalyzerFactory.getInstance().getDocumentSkewCorrectionAnalyzer(setting);
-        
-        
+
+
     }
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -375,7 +376,7 @@ public class Service extends android.app.Service {
     /***
      * 形状检测
      */
-    public ShapeDetectionResult shapeDetection(ShapeDetectionInput shapeDetectionInput)  {
+    public ShapeDetectionResult shapeDetection(ShapeDetectionInput shapeDetectionInput) {
         int width = shapeDetectionInput.getBitmap().getWidth();
         int height = shapeDetectionInput.getBitmap().getHeight();
 
@@ -415,7 +416,7 @@ public class Service extends android.app.Service {
         Mat hierarchy = new Mat();
         Imgproc.findContours(kerneled, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//查找轮廓
         double maxSize = width * height;
-        
+
         for(int i = 0; i < contours.size(); i++) {
             double area = Imgproc.contourArea(contours.get(i));
             if (area / maxSize > shapeDetectionInput.getMinJudgmentRange()) {

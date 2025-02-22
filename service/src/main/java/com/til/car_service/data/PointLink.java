@@ -1,4 +1,4 @@
-﻿package com.til.car_service.data;
+package com.til.car_service.data;
 
 import com.til.util.PointUtil;
 import lombok.AllArgsConstructor;

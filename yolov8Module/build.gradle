@@ -4,10 +4,11 @@ plugins {
 
 android { 
     namespace 'com.example.yolov8module'
-    compileSdk 34
+    compileSdk compile_sdk_version
 
     defaultConfig {
-        minSdk 30
+        minSdk min_sdk_version
+        targetSdkVersion target_sdk_version
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -20,8 +21,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility source_compatibility
+        targetCompatibility target_compatibility
     }
     externalNativeBuild {
         cmake {
