@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CarTesseractResult {
+public class LicensePlatesRecognitionResult {
     private Plate[] plates;
     private String[] licensePlates;
     private Bitmap outBitmap;
