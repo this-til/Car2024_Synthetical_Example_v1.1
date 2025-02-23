@@ -12,12 +12,44 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package yolov8ncnn;
+package com.yolov8ncnn;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.view.Surface;
 
+public class Yolov8Ncnn {
+
+    static {
+        System.loadLibrary("yolov8ncnn");
+    }
+
+    public static native boolean init(AssetManager mgr, boolean useGpu);
+    public static native boolean loadModel(String modelName);
+    
+    public static native Obj[] Detect(Bitmap bitmap, boolean use_gpu,int model);
+
+    public static native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
+    public native boolean openCamera(int facing);
+    public native boolean closeCamera();
+    public native boolean setOutputWindow(Surface surface);
+
+    public static class Obj {
+        public float x;
+        public float y;
+        public float w;
+        public float h;
+        public int label;
+        public float prob;
+
+        public Obj() {
+            // 初始化代码
+        }
+    }
+    
+}
+
+/*
 public class Yolov8Ncnn {
 
     // 模型0【n】（弃用）
@@ -31,7 +63,8 @@ public class Yolov8Ncnn {
     // 模型8
     // 模型9
     // 模型0
-    /**
+    */
+/**
      * 摄像头角度控制，可发送自定协议
      *
      * @param modelid
@@ -42,7 +75,8 @@ public class Yolov8Ncnn {
      *        模型7【人脸】
      *        模型8【车牌】
      * @param cpugpu       CPU/GPU
-     */
+     *//*
+
     public static native boolean Init(AssetManager mgr, int modelid, int cpugpu);
 
     public static String[] labels = {
@@ -54,7 +88,7 @@ public class Yolov8Ncnn {
             "掉头",
             "直行",
             "禁止左转",
-            "禁止左转",
+            "禁止右转",
             "禁止掉头",
             "禁止直行",
             "禁止通行",
@@ -122,4 +156,5 @@ public class Yolov8Ncnn {
         System.loadLibrary("yolov8ncnn");
     }
 }
+*/
 

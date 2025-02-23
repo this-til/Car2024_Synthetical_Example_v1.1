@@ -1,4 +1,4 @@
-﻿package com.example.yolov8module;
+package com.example.yolov8module;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;

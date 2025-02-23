@@ -52,10 +52,10 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        
+
         ocrEngine = new OcrEngine(this);
         System.loadLibrary("yolov8ncnn");
-
+        
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
         analyzer = MLDocumentSkewCorrectionAnalyzerFactory.getInstance().getDocumentSkewCorrectionAnalyzer(setting);
@@ -290,7 +290,7 @@ public class Service extends android.app.Service {
     }
 
     /***
-     * 红路灯检测
+     * 红绿灯检测
      */
     public TrafficLightCheckResult trafficLightCheck(Bitmap bitmap) {
         int red = 0, yellow = 0, green = 0;

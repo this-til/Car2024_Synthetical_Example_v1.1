@@ -7,6 +7,8 @@ plugins {
 android {
     namespace "com.benjaminwan.ocrlibrary"
     compileSdk compile_sdk_version
+    ndkVersion ndk_version
+    buildToolsVersion build_tool_version
 
     defaultConfig {
 
@@ -16,11 +18,11 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
 
-        externalNativeBuild {
+        /*externalNativeBuild {
             cmake {
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
             }
-        }
+        }*/
     }
 
     buildTypes {
@@ -41,7 +43,7 @@ android {
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
+            version "3.22.1"
         }
     }
 
@@ -64,8 +66,7 @@ android {
             }
         }*/
     }
-    ndkVersion ndk_version
-    buildToolsVersion build_tool_version
+
 
     libraryVariants.all {
         variant ->

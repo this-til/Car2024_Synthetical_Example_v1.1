@@ -3,9 +3,11 @@ plugins {
 }
 
 android { 
-    namespace 'com.example.yolov8module'
+    namespace 'com.yolov8ncnn'
     compileSdk compile_sdk_version
-
+    ndkVersion ndk_version
+    buildToolsVersion build_tool_version
+    
     defaultConfig {
         minSdk min_sdk_version
         targetSdkVersion target_sdk_version
@@ -30,9 +32,17 @@ android {
             path file('src/main/jni/CMakeLists.txt')
         }
     }
+    
 }
 
 dependencies {
+
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
     implementation 'com.google.android.material:material:1.9.0'

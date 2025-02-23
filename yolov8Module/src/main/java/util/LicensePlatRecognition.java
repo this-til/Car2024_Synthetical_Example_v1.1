@@ -1,3 +1,4 @@
+/*
 package util;
 
 //import static car.bkrc.com.car2024.FragmentView.PicInformationProcess.picrec_iv;
@@ -5,35 +6,28 @@ package util;
 //import static car.bkrc.com.car2024.ViewAdapter.InfrareAdapter.handler;
 
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 
 import com.hyperai.hyperlpr3.HyperLPR3;
 import com.hyperai.hyperlpr3.bean.Plate;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-import yolov8ncnn.Yolov8Ncnn;
+import com.yolov8ncnn.Yolov8Ncnn;
 
 public class LicensePlatRecognition {
 
@@ -112,3 +106,4 @@ public class LicensePlatRecognition {
         }
     }
 }
+*/

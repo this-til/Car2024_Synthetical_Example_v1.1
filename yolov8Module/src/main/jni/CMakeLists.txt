@@ -1,6 +1,8 @@
 ﻿project(yolov8ncnn)
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.22.1)
+
+find_package(OpenMP REQUIRED)
 
 set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/sdk/native/jni)
 find_package(OpenCV REQUIRED core imgproc)
