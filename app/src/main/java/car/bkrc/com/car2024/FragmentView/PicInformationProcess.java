@@ -93,16 +93,12 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("交通识别标志物");
+                            picrectext_tv.setText("识别标识物");
                             picrec_iv.setImageBitmap(picBitmap);
                         });
+                        //TODO 
                         return picBitmap;
-                    })
-                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getStatisticalDescription());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
+                    });
         } else if (id == R.id.mask_all_btn) {
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
@@ -112,7 +108,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         });
                         return picBitmap;
                     })
-                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.MASK_MODEL))
+                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel. MASK_MODEL))
                     .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                         picrectext_tv.setText(result.getStatisticalDescription());
                         picrec_iv.setImageBitmap(result.getOutBitmap());
@@ -158,7 +154,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("ocr识别");
+                            picrectext_tv.setText("ocr识别！");
                             picrec_iv.setImageBitmap(picBitmap);
                         });
                         return picBitmap;
@@ -183,7 +179,6 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         picrec_iv.setImageBitmap(result.getOutImage());
                         picrectext_tv.setText(result.getTotal());
                     }));
-            // 处理交通灯识别点击事件的代码
         } else if (id == R.id.cartype_all_btn) {
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
@@ -203,14 +198,16 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-
+                            picrectext_tv.setText("交通识别标志物");
+                            picrec_iv.setImageBitmap(picBitmap);
                         });
-                        //TODO 处理交通标识识别点击事件的代码
-                        picrectext_tv.setText("识别交通标识,需要二次开发！");
-                        picrec_iv.setImageBitmap(picBitmap);
                         return picBitmap;
-                    });
-
+                    })
+                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText(result.getStatisticalDescription());
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
         } else if (id == R.id.graphic_color_btn) {
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {

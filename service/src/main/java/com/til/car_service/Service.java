@@ -547,11 +547,11 @@ public class Service extends android.app.Service {
         if (!model.isLoaded()) {
             model.loadModel();
         }
-        
+
         CompletionStage<Object> completableFuture = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 ? CompletableFuture.completedStage(null)
                 : CompletableFuture.supplyAsync(() -> null);
-        
+
         //if (!model.isLoaded()) {
         //    completableFuture.thenRunAsync(model::loadModel, ContextCompat.getMainExecutor(this));
         //}
@@ -573,10 +573,11 @@ public class Service extends android.app.Service {
                         float w = itemCell.getW();
                         float h = itemCell.getH();
                         final RectF rect = new RectF(
-                                Math.max(0, x - w / 2),
-                                Math.max(0, y - h / 2),
-                                Math.min(bitmap.getWidth() - 1, x + w / 2),
-                                Math.min(bitmap.getHeight() - 1, y + h / 2)
+                                /*Math.max(0, x - w / 2),*/
+                                /*Math.max(0, y - h / 2),*/
+                                /*Math.min(bitmap.getWidth() - 1, x + w / 2),*/
+                                /*Math.min(bitmap.getHeight() - 1, y + h / 2)*/
+                                x,y,x+w,y+h
                         );
                         final RectF location = new RectF(rect);
                         canvas.drawRect(location, paint);
@@ -590,6 +591,9 @@ public class Service extends android.app.Service {
      * 为识别结果生成描述
      */
     public static <I extends IItem> String handleStatisticalDescription(IItem.ItemCell<I>[] results) {
+        if (results.length == 0) {
+            return "未识别到";
+        }
         Map<I, Integer> count = new HashMap<>();
         for(IItem.ItemCell<I> result : results) {
             count.put(result.getItem(), Objects.requireNonNullElse(count.get(result.getItem()), 0) + 1);

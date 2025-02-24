@@ -49,8 +49,8 @@ public interface IItem {
     @AllArgsConstructor
     enum TrafficSignType implements IItem {
 
-        TURN_RIGHT("右转"),
         TURN_LEFT("左转"),
+        TURN_RIGHT("右转"),
         TURN_ROUND("掉头"),
         TURN_STRAIGHT("直行"),
         NO_TURN_RIGHT("禁止右转"),

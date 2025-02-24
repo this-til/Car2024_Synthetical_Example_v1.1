@@ -77,7 +77,7 @@ public interface IModel<I extends IItem> {
 
         @Setter
         @Accessors(chain = true)
-        private boolean useGpu = false;
+        private boolean useGpu = true;
 
         private boolean loaded;
 
