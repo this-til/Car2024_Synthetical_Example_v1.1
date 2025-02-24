@@ -126,6 +126,7 @@ void generate_grids_and_stride(const int target_w, const int target_h, std::vect
 }
 
 void generate_proposals(std::vector <GridAndStride> grid_strides, const ncnn::Mat &pred, float prob_threshold, std::vector <Object> &objects, int itemSize) {
+   
     const int num_points = grid_strides.size();
     int num_class = itemSize;
     __android_log_print(ANDROID_LOG_DEBUG, "yolov8ncnn", "模型种类 %d ", num_class);
@@ -209,8 +210,7 @@ Yolo::~Yolo() {
     delete extractBlobName;
 }
 
-int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, const float* _mean_vals,
-               const float* _norm_vals, bool use_gpu) {
+int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, const float* _mean_vals, const float* _norm_vals, bool use_gpu) {
     yolo.clear();
     blob_pool_allocator.clear();
     workspace_pool_allocator.clear();
@@ -230,10 +230,10 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
 
     char parampath[256];
     char modelpath[256];
-    sprintf(parampath, "yolov8%s.param", modeltype);
-    sprintf(modelpath, "yolov8%s.bin", modeltype);
-    __android_log_print(ANDROID_LOG_DEBUG, "yolov8ncnn", "载入：yolov8%s.param", modeltype);
-    __android_log_print(ANDROID_LOG_DEBUG, "yolov8ncnn", "载入：yolov8%s.bin", modeltype);
+    sprintf(parampath, "yolov8_%s.param", modeltype);
+    sprintf(modelpath, "yolov8_%s.bin", modeltype);
+    __android_log_print(ANDROID_LOG_DEBUG, "yolov8ncnn", "载入：yolov8_%s.param", modeltype);
+    __android_log_print(ANDROID_LOG_DEBUG, "yolov8ncnn", "载入：yolov8_%s.bin", modeltype);
     yolo.load_param(mgr, parampath);
     yolo.load_model(mgr, modelpath);
 
@@ -334,11 +334,9 @@ int Yolo::detect(const cv::Mat &rgb, std::vector <Object> &objects, float prob_t
 }
 
 int Yolo::detectPicture(JNIEnv* env, jobject bitmap, int width, int height, std::vector <Object> &objects, float prob_threshold, float nms_threshold) {
-    // 注意传入参数的不同点在于jobject bitmap, int width, int height，
     int w = width;
     int h = height;
-    // ... 省略和detect()方法完全一致的步骤
-// pad to multiple of 32
+
     float scale = 1.f;
     if (w > h) {
         scale = (float) target_size / w;
@@ -349,16 +347,13 @@ int Yolo::detectPicture(JNIEnv* env, jobject bitmap, int width, int height, std:
         h = target_size;
         w = w * scale;
     }
-    // 由于传入图像格式为Bitmap,这一步需要换成下面的方法
+   
     ncnn::Mat in = ncnn::Mat::from_android_bitmap_resize(env, bitmap, ncnn::Mat::PIXEL_RGB, w, h);
 
-    // ...其余部分也和detect()的剩余部分一致
-    // pad to target_size rectangle
     int wpad = (w + 31) / 32 * 32 - w;
     int hpad = (h + 31) / 32 * 32 - h;
     ncnn::Mat in_pad;
-    ncnn::copy_make_border(in, in_pad, hpad / 2, hpad - hpad / 2, wpad / 2, wpad - wpad / 2, ncnn::BORDER_CONSTANT,
-                           0.f);
+    ncnn::copy_make_border(in, in_pad, hpad / 2, hpad - hpad / 2, wpad / 2, wpad - wpad / 2, ncnn::BORDER_CONSTANT, 0.f);
 
     in_pad.substract_mean_normalize(0, norm_vals);
 
@@ -369,6 +364,7 @@ int Yolo::detectPicture(JNIEnv* env, jobject bitmap, int width, int height, std:
 
     ncnn::Mat out;
     ex.extract(extractBlobName, out);
+    //ex.extract("output0", out);
 
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector <GridAndStride> grid_strides;

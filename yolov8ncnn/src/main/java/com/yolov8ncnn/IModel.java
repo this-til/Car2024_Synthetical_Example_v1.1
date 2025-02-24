@@ -2,20 +2,48 @@ package com.yolov8ncnn;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.RectF;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.util.Arrays;
 import java.util.function.Function;
 
 public interface IModel<I extends IItem> {
 
-    Model<IItem.VehicleType> VEHICLE_MODEL = new Model<>("Vehicle", IItem.VehicleType.values().length, id -> IItem.VehicleType.values()[id]);
-    Model<IItem.CardType> CARD_MODEL = new Model<>("Card", IItem.CardType.values().length, id -> IItem.CardType.values()[id]);
-    Model<IItem.TrafficSignType> TRAFFIC_SIGN_MODEL = new Model<>("TrafficSign", IItem.TrafficSignType.values().length, id -> IItem.TrafficSignType.values()[id]);
-    Model<IItem.TrafficLightType> TRAFFIC_LIGHT_MODEL = new Model<>("TrafficLight", IItem.TrafficLightType.values().length, id -> IItem.TrafficLightType.values()[id]);
-    Model<IItem.ShapeAndColorType> SHAPE_AND_COLOR_MODEL = new Model<>("ShapeAndColor", IItem.ShapeAndColorType.values().length, id -> IItem.ShapeAndColorType.values()[id]);
-    Model<IItem.MaskType> MASK_MODEL = new Model<>("Mask", IItem.MaskType.values().length, id -> IItem.MaskType.values()[id]);
+    /***
+     * 交通工具模型
+     */
+    Model<IItem.VehicleType> VEHICLE_MODEL = new Model<>("vehicle", IItem.VehicleType.values().length, id -> IItem.VehicleType.values()[id]);
+
+    /***
+     * 车辆牌照模型
+     */
+    Model<IItem.CardType> CARD_MODEL = new Model<>("card", IItem.CardType.values().length, id -> IItem.CardType.values()[id])
+            .setTargetSizes(1280);
+
+    /***
+     * 交通识别标志物模型
+     */
+    Model<IItem.TrafficSignType> TRAFFIC_SIGN_MODEL = new Model<>("traffic_sign", IItem.TrafficSignType.values().length, id -> IItem.TrafficSignType.values()[id]);
+
+    /***
+     * 红绿灯模型
+     */
+    Model<IItem.TrafficLightType> TRAFFIC_LIGHT_MODEL = new Model<>("traffic_light", IItem.TrafficLightType.values().length, id -> IItem.TrafficLightType.values()[id]);
+
+    /***
+     * 形状和颜色模型
+     */
+    Model<IItem.ShapeAndColorType> SHAPE_AND_COLOR_MODEL = new Model<>("shape_and_color", IItem.ShapeAndColorType.values().length, id -> IItem.ShapeAndColorType.values()[id])
+            .setTargetSizes(1280);
+
+    /***
+     * 口罩模型
+     */
+    Model<IItem.MaskType> MASK_MODEL = new Model<>("mask", IItem.MaskType.values().length, id -> IItem.MaskType.values()[id]);
 
     String getModelName();
 
@@ -25,21 +53,32 @@ public interface IModel<I extends IItem> {
 
     String getExtractBlobName();
 
-    void loadModel(AssetManager mgr);
+    void loadModel();
 
     IItem.ItemCell<I>[] detect(Bitmap bitmap);
-    
+
     boolean isLoaded();
 
 
     @Getter
     class Model<I extends IItem> implements IModel<I> {
 
-        private String modelName;
-        private int itemSize;
-        private Function<Integer, I> asItem;
+        private final String modelName;
+        private final int itemSize;
+        private final Function<Integer, I> asItem;
+
+        @Setter
+        @Accessors(chain = true)
         private String extractBlobName = "output0";
-        private boolean useGpu;
+
+        @Setter
+        @Accessors(chain = true)
+        private int targetSizes = 640;
+
+        @Setter
+        @Accessors(chain = true)
+        private boolean useGpu = false;
+
         private boolean loaded;
 
         public Model(String modelName, int itemSize, Function<Integer, I> asItem) {
@@ -55,8 +94,9 @@ public interface IModel<I extends IItem> {
         }
 
         @Override
-        public void loadModel(AssetManager mgr) {
-            Yolov8Ncnn.loadModel(mgr, getModelName(), getItemSize(), getExtractBlobName(), isUseGpu());
+        public void loadModel() {
+            Yolov8Ncnn.loadModel(getModelName(), getItemSize(), getExtractBlobName(), isUseGpu());
+            loaded = true;
         }
 
         @Override

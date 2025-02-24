@@ -1,5 +1,6 @@
 package com.yolov8ncnn;
 
+import android.graphics.RectF;
 import lombok.*;
 import org.jetbrains.annotations.Nullable;
 

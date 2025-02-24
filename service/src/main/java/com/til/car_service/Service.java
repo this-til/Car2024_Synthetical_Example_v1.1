@@ -1,11 +1,15 @@
 package com.til.car_service;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.*;
 import android.graphics.Rect;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 import com.benjaminwan.ocrlibrary.OcrEngine;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
@@ -21,6 +25,7 @@ import com.til.util.TaskUtil;
 import com.til.util.tuple.Ptr;
 import com.yolov8ncnn.IItem;
 import com.yolov8ncnn.IModel;
+import com.yolov8ncnn.Yolov8Ncnn;
 import org.opencv.android.Utils;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
@@ -28,9 +33,11 @@ import org.opencv.imgproc.Moments;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class Service extends android.app.Service {
@@ -56,7 +63,7 @@ public class Service extends android.app.Service {
         super.onCreate();
 
         //ocrEngine = new OcrEngine(this);
-        System.loadLibrary("yolov8ncnn");
+        Yolov8Ncnn.init(getAssets());
 
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
@@ -81,7 +88,7 @@ public class Service extends android.app.Service {
     /***
      * ocr文字识别-异步
      */
-    public CompletableFuture<OcrResult> ocrAsync(OcrInput characterRecognitionInput) {
+    public CompletionStage<OcrResult> ocrAsync(OcrInput characterRecognitionInput) {
         return CompletableFuture.supplyAsync(() -> ocr(characterRecognitionInput));
     }
 
@@ -108,7 +115,7 @@ public class Service extends android.app.Service {
     /***
      * 二维码
      */
-    public CompletableFuture<QrRecognitionResult> qrRecognitionAsync(Bitmap bitmap) {
+    public CompletionStage<QrRecognitionResult> qrRecognitionAsync(Bitmap bitmap) {
         return CompletableFuture
                 .supplyAsync(() -> InputImage.fromBitmap(bitmap, 0))
                 .thenComposeAsync(image -> TaskUtil.convert(scanner.process(image)))
@@ -204,14 +211,14 @@ public class Service extends android.app.Service {
     /***
      * 车牌识别异步
      */
-    public CompletableFuture<LicensePlatesRecognitionResult> carTesseractAsync(Bitmap bitmap) {
+    public CompletionStage<LicensePlatesRecognitionResult> carTesseractAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> licensePlatesRecognition(bitmap));
     }
 
     /***
      * 边缘检测
      */
-    public CompletableFuture<FindCornerResult> findCornerAsync(Bitmap bitmap) {
+    public CompletionStage<FindCornerResult> findCornerAsync(Bitmap bitmap) {
         
         
        /* return CompletableFuture.supplyAsync(() -> MLFrame.fromBitmap(bitmap))
@@ -371,7 +378,7 @@ public class Service extends android.app.Service {
     /***
      * 红路灯检测异步
      */
-    public CompletableFuture<TrafficLightCheckResult> trafficLightCheckAsync(Bitmap bitmap) {
+    public CompletionStage<TrafficLightCheckResult> trafficLightCheckAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> trafficLightCheck(bitmap));
     }
 
@@ -528,7 +535,7 @@ public class Service extends android.app.Service {
     /***
      * 形状检测-异步
      */
-    public CompletableFuture<ShapeDetectionResult> shapeDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
+    public CompletionStage<ShapeDetectionResult> shapeDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
         return CompletableFuture.supplyAsync(() -> shapeDetection(shapeDetectionInput));
     }
 
@@ -536,15 +543,63 @@ public class Service extends android.app.Service {
     /***
      * 使用模型识别
      */
-    public <I extends IItem> CompletableFuture<IItem.ItemCell<I>[]> yolov8Detect(Bitmap bitmap, IModel<I> model) {
-        return CompletableFuture.supplyAsync(() -> {
-            if (!model.isLoaded()) {
-                model.loadModel(getAssets());
-            }
-            return model.detect(bitmap);
-        });
+    public <I extends IItem> CompletionStage<Yolov8DetectResult<I>> yolov8Detect(Bitmap bitmap, IModel<I> model) {
+        if (!model.isLoaded()) {
+            model.loadModel();
+        }
+        
+        CompletionStage<Object> completableFuture = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                ? CompletableFuture.completedStage(null)
+                : CompletableFuture.supplyAsync(() -> null);
+        
+        //if (!model.isLoaded()) {
+        //    completableFuture.thenRunAsync(model::loadModel, ContextCompat.getMainExecutor(this));
+        //}
+
+        return completableFuture
+                .thenApplyAsync(_void -> model.detect(bitmap))
+                .thenApplyAsync(itemCells -> {
+                    Bitmap outBitmap = Bitmap.createBitmap(bitmap);
+
+                    final Canvas canvas = new Canvas(outBitmap);
+                    final Paint paint = new Paint();
+                    paint.setColor(Color.RED);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(2.0f);
+
+                    for(IItem.ItemCell<I> itemCell : itemCells) {
+                        float x = itemCell.getX();
+                        float y = itemCell.getY();
+                        float w = itemCell.getW();
+                        float h = itemCell.getH();
+                        final RectF rect = new RectF(
+                                Math.max(0, x - w / 2),
+                                Math.max(0, y - h / 2),
+                                Math.min(bitmap.getWidth() - 1, x + w / 2),
+                                Math.min(bitmap.getHeight() - 1, y + h / 2)
+                        );
+                        final RectF location = new RectF(rect);
+                        canvas.drawRect(location, paint);
+                    }
+                    return new Yolov8DetectResult<>(itemCells, outBitmap, handleStatisticalDescription(itemCells));
+                });
+
     }
-    
-    
+
+    /***
+     * 为识别结果生成描述
+     */
+    public static <I extends IItem> String handleStatisticalDescription(IItem.ItemCell<I>[] results) {
+        Map<I, Integer> count = new HashMap<>();
+        for(IItem.ItemCell<I> result : results) {
+            count.put(result.getItem(), Objects.requireNonNullElse(count.get(result.getItem()), 0) + 1);
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Map.Entry<I, Integer> stringIntegerEntry : count.entrySet()) {
+            stringBuilder.append(stringIntegerEntry.getKey().getName()).append(":").append(stringIntegerEntry.getValue()).append("  ");
+        }
+        return stringBuilder.toString();
+    }
+
 
 }

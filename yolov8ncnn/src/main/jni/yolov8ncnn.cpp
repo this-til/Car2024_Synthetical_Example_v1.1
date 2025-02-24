@@ -120,13 +120,13 @@ void loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstr
     char* copyStr;
     size_t strLen;
       
-    if (useGpu && ncnn::get_gpu_count()) {
+    if (useGpu && ncnn::get_gpu_count() == 0) {
         env->ThrowNew(env->FindClass("java/lang/UnsupportedOperationException"), "No GPU support");
         goto end;
     }
 
     nativeModelName = env->GetStringUTFChars(modelName, nullptr);
-    nativeExtractBlobName = env->GetStringUTFChars(modelName, nullptr);
+    nativeExtractBlobName = env->GetStringUTFChars(extractBlobName, nullptr);
 
     if (!nativeModelName || !nativeExtractBlobName) {
         env->ThrowNew(env->FindClass("java/lang/OutOfMemoryError"), "Failed to convert Java string to UTF-8");
@@ -138,7 +138,7 @@ void loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstr
     if (map.find(nativeModelNameStr) != map.end()) {
        goto end;
     }
-
+ 
     yolo = new Yolo();
 
     strLen = strlen(nativeExtractBlobName) + 1;
@@ -298,19 +298,19 @@ JNIEXPORT void JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_loadModel(JNIEnv* env, job
     loadModel(env, thiz, modelName, itemSize , extractBlobName, useGpu);
 }
 
-JNIEXPORT jobjectArray JNICALL Java_yolov8ncnn_Yolov8Ncnn_detect(JNIEnv* env, jobject thiz,jobject bitmap, jstring modelName) {
+JNIEXPORT jobjectArray JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_detect(JNIEnv* env, jobject thiz, jobject bitmap, jstring modelName) {
     return detect(env, thiz, bitmap, modelName);
 }
 
-JNIEXPORT void JNICALL Java_yolov8ncnn_Yolov8Ncnn_openCamera(JNIEnv* env, jobject thiz, jint facing, jstring modelName) {
+JNIEXPORT void JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_openCamera(JNIEnv* env, jobject thiz, jint facing, jstring modelName) {
     openCamera(env, thiz, facing, modelName);
 }
 
-JNIEXPORT void Java_yolov8ncnn_Yolov8Ncnn_closeCamera(JNIEnv* env, jobject thiz) {
+JNIEXPORT void Java_com_yolov8ncnn_Yolov8Ncnn_closeCamera(JNIEnv* env, jobject thiz) {
     closeCamera(env, thiz);
 }
 
-JNIEXPORT void Java_yolov8ncnn_Yolov8Ncnn_setOutputWindow(JNIEnv* env, jobject thiz, jobject surface) {
+JNIEXPORT void Java_com_yolov8ncnn_Yolov8Ncnn_setOutputWindow(JNIEnv* env, jobject thiz, jobject surface) {
     setOutputWindow(env, thiz , surface);
 }
 

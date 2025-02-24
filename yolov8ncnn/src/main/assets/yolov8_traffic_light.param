@@ -1,4 +1,4 @@
-﻿7767517
+7767517
 237 289
 Input                    images                   0 1 images
 Convolution              /model.0/conv/Conv       1 1 images /model.0/conv/Conv_output_0 0=48 1=3 3=2 4=1 5=1 6=1296

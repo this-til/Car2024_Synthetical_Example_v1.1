@@ -86,7 +86,6 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
     @Override
     public void onClick(View v) {
         CompletableFuture<Bitmap> hdBitmapAsync = LeftFragment.INSTANCE.getHDBitmapAsync();
-
         int id = v.getId();
         if (id == R.id.back_imbtn) {
             exitFragment();
@@ -99,18 +98,25 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         });
                         return picBitmap;
                     })
-                    .thenComposeAsync(picBitmap -> service.yolov8Recognize(picBitmap, IModel.TRAFFIC_SIGN_MODEL));
+                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText(result.getStatisticalDescription());
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
         } else if (id == R.id.mask_all_btn) {
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-
+                            picrectext_tv.setText("识别人脸佩戴口罩！");
+                            picrec_iv.setImageBitmap(picBitmap);
                         });
-                        // TODO 处理识别口罩点击事件的代码
-                        picrectext_tv.setText("识别人脸佩戴口罩,需要二次开发！");
-                        picrec_iv.setImageBitmap(picBitmap);
                         return picBitmap;
-                    });
+                    })
+                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.MASK_MODEL))
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText(result.getStatisticalDescription());
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
         } else if (id == R.id.qr_all_btn) {
             // 处理识别二维码点击事件的代码
             hdBitmapAsync
@@ -123,9 +129,8 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                     })
                     .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
                     .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        if (result.getBarcodes().length==0) {
+                        if (result.getBarcodes().length == 0) {
                             picrectext_tv.setText("未识别到二维码！");
-                            //RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
                             return;
                         }
                         picrectext_tv.setText(result.getTotal());
@@ -183,13 +188,16 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             hdBitmapAsync
                     .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-
+                            picrectext_tv.setText("识别车辆类型中！");
+                            picrec_iv.setImageBitmap(picBitmap);
                         });
-                        // TODO 处理车型识别点击事件的代码
-                        picrectext_tv.setText("识别车辆类型,需要二次开发！");
-                        picrec_iv.setImageBitmap(picBitmap);
                         return picBitmap;
-                    });
+                    })
+                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.VEHICLE_MODEL))
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText(result.getStatisticalDescription());
+                        picrec_iv.setImageBitmap(result.getOutBitmap());
+                    }));
 
         } else if (id == R.id.tracfficsign_all_btn) {
             hdBitmapAsync
@@ -252,12 +260,13 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                 // 异常处理
             }
         }
-
-        hdBitmapAsync.thenRun(() -> vSimple(getContext(), 10));
-        hdBitmapAsync.exceptionally(e -> {
-            Log.e("Recognize", "recognition failed:", e);
-            return null;
-        });
+        
+        hdBitmapAsync
+                .thenRun(() -> vSimple(getContext(), 10))
+                .exceptionally(e -> {
+                    Log.e("Recognize", "recognition failed:", e);
+                    return null;
+                });
     }
 
 
