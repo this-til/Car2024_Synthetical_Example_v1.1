@@ -19,6 +19,8 @@ import com.til.car_service.data.*;
 import com.til.util.PointUtil;
 import com.til.util.TaskUtil;
 import com.til.util.tuple.Ptr;
+import com.yolov8ncnn.IItem;
+import com.yolov8ncnn.IModel;
 import org.opencv.android.Utils;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
@@ -531,7 +533,7 @@ public class Service extends android.app.Service {
     }
 
 
-    public CompletableFuture<Item> yolov8Recognize(Bitmap bitmap, ) {
+    public <I extends IItem> CompletableFuture<IItem.ItemCell<I>> yolov8Recognize(Bitmap bitmap, IModel<I> model) {
         
     }
     

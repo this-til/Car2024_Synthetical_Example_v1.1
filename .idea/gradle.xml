@@ -14,7 +14,7 @@
             <option value="$PROJECT_DIR$/openCVLibrary343" />
             <option value="$PROJECT_DIR$/service" />
             <option value="$PROJECT_DIR$/util" />
-            <option value="$PROJECT_DIR$/yolov8Module" />
+            <option value="$PROJECT_DIR$/yolov8ncnn" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />
