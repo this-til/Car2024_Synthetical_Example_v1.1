@@ -1,9 +1,0 @@
-﻿YellowTruck
-Yellowmotorcycle
-bikes
-bluecar
-redcar
-redmotorcycle
-whitecar
-whitetruck
-yellowcar

@@ -1,3 +1,0 @@
-﻿masked
-half_masked
-no_mask

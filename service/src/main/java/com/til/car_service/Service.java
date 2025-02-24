@@ -53,7 +53,7 @@ public class Service extends android.app.Service {
     public void onCreate() {
         super.onCreate();
 
-        ocrEngine = new OcrEngine(this);
+        //ocrEngine = new OcrEngine(this);
         System.loadLibrary("yolov8ncnn");
         
         scanner = BarcodeScanning.getClient();
@@ -531,4 +531,8 @@ public class Service extends android.app.Service {
     }
 
 
+    public CompletableFuture<Item> yolov8Recognize(Bitmap bitmap, ) {
+        
+    }
+    
 }
