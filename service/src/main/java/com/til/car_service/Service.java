@@ -1,6 +1,5 @@
 package com.til.car_service;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.*;
 import android.graphics.Rect;
@@ -9,7 +8,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
 import com.benjaminwan.ocrlibrary.OcrEngine;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
@@ -33,12 +31,11 @@ import org.opencv.imgproc.Moments;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Service extends android.app.Service {
 
@@ -159,7 +156,7 @@ public class Service extends android.app.Service {
                     return new QrRecognitionResult(
                             barcodes,
                             rawValues,
-                            stringBuilder.toString(),
+                            barcodes.length == 0 ? "未识别到二维码" : stringBuilder.toString(),
                             outBitmap
                     );
 
@@ -167,7 +164,7 @@ public class Service extends android.app.Service {
     }
 
     /***
-     * 车牌识别同步
+     * 车牌识别同步(官方示例)
      */
     public LicensePlatesRecognitionResult licensePlatesRecognition(Bitmap bitmap) {
         Bitmap bcopy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -205,7 +202,14 @@ public class Service extends android.app.Service {
             };
         }
 
-        return new LicensePlatesRecognitionResult(plates, licensePlates, copyShow, String.join("\n", licensePlates));
+        return new LicensePlatesRecognitionResult(
+                plates,
+                licensePlates,
+                copyShow,
+                licensePlates.length > 0
+                        ? String.join("\n", licensePlates)
+                        : "未识别到车牌"
+        );
     }
 
     /***
@@ -351,13 +355,13 @@ public class Service extends android.app.Service {
 
         if (red > yellow && red > green) {
             trafficLightState = TrafficLightState.RED;
-            total = "交通信号灯识别结果：红色";
+            total = "结果：红色";
         } else if (yellow > red && yellow > green) {
             trafficLightState = TrafficLightState.YELLOW;
-            total = "交通信号灯识别结果：黄色";
+            total = "结果：黄色";
         } else if (green > red && green > yellow) {
             trafficLightState = TrafficLightState.GREEN;
-            total = "交通信号灯识别结果：绿色";
+            total = "结果：绿色";
         } else {
             trafficLightState = TrafficLightState.NULL;
             total = "未识别到交通灯";
@@ -376,7 +380,7 @@ public class Service extends android.app.Service {
     }
 
     /***
-     * 红路灯检测异步
+     * 红绿灯检测异步
      */
     public CompletionStage<TrafficLightCheckResult> trafficLightCheckAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> trafficLightCheck(bitmap));
@@ -385,7 +389,7 @@ public class Service extends android.app.Service {
     /***
      * 形状检测
      */
-    public ShapeDetectionResult shapeDetection(ShapeDetectionInput shapeDetectionInput) {
+    public ShapeColorDetectionResult shapeColorDetection(ShapeDetectionInput shapeDetectionInput) {
         int width = shapeDetectionInput.getBitmap().getWidth();
         int height = shapeDetectionInput.getBitmap().getHeight();
 
@@ -420,7 +424,7 @@ public class Service extends android.app.Service {
 
         List<MatOfPoint> contours = new ArrayList<>();
         List<MatOfPoint> _contours = new ArrayList<>();
-        List<ShapeDetectionResult.ShapeDescribe> resultList = new ArrayList<>();
+        List<ShapeColorDetectionResult.ShapeDescribe> resultList = new ArrayList<>();
 
         Mat hierarchy = new Mat();
         Imgproc.findContours(kerneled, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//查找轮廓
@@ -521,22 +525,23 @@ public class Service extends android.app.Service {
             if (shapeType == null) {
                 continue;
             }
-            resultList.add(new ShapeDetectionResult.ShapeDescribe(shapeType, colorType, contour));
+            resultList.add(new ShapeColorDetectionResult.ShapeDescribe(shapeType, colorType, contour));
             _contours.add(contour);
         }
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Imgproc.drawContours(outMat, _contours, -1, new Scalar(255, 0, 0), 5);
         org.opencv.android.Utils.matToBitmap(outMat, bitmap);
-        return new ShapeDetectionResult(resultList.toArray(new ShapeDetectionResult.ShapeDescribe[0]), bitmap);
+        ShapeColorDetectionResult.ShapeDescribe[] array = resultList.toArray(new ShapeColorDetectionResult.ShapeDescribe[0]);
+        return new ShapeColorDetectionResult(array, bitmap, handleStatisticalDescription(array));
 
     }
 
     /***
      * 形状检测-异步
      */
-    public CompletionStage<ShapeDetectionResult> shapeDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
-        return CompletableFuture.supplyAsync(() -> shapeDetection(shapeDetectionInput));
+    public CompletionStage<ShapeColorDetectionResult> shapeColorDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
+        return CompletableFuture.supplyAsync(() -> shapeColorDetection(shapeDetectionInput));
     }
 
 
@@ -577,7 +582,7 @@ public class Service extends android.app.Service {
                                 /*Math.max(0, y - h / 2),*/
                                 /*Math.min(bitmap.getWidth() - 1, x + w / 2),*/
                                 /*Math.min(bitmap.getHeight() - 1, y + h / 2)*/
-                                x,y,x+w,y+h
+                                x, y, x + w, y + h
                         );
                         final RectF location = new RectF(rect);
                         canvas.drawRect(location, paint);
@@ -598,11 +603,22 @@ public class Service extends android.app.Service {
         for(IItem.ItemCell<I> result : results) {
             count.put(result.getItem(), Objects.requireNonNullElse(count.get(result.getItem()), 0) + 1);
         }
-        StringBuilder stringBuilder = new StringBuilder();
-        for(Map.Entry<I, Integer> stringIntegerEntry : count.entrySet()) {
-            stringBuilder.append(stringIntegerEntry.getKey().getName()).append(":").append(stringIntegerEntry.getValue()).append("  ");
+        return count.entrySet().stream()
+                .map(entry -> entry.getKey().getName() + ":" + entry.getValue())
+                .collect(Collectors.joining("\n"));
+    }
+
+    public static String handleStatisticalDescription(ShapeColorDetectionResult.ShapeDescribe[] shapeDescribes) {
+        if (shapeDescribes.length == 0) {
+            return "未识别到";
         }
-        return stringBuilder.toString();
+        Map<ShapeColorDetectionResult.ShapeDescribe, Integer> count = new HashMap<>();
+        for(ShapeColorDetectionResult.ShapeDescribe shapeDescribe : shapeDescribes) {
+            count.put(shapeDescribe, Objects.requireNonNullElse(count.get(shapeDescribe), 0) + 1);
+        }
+        return count.entrySet().stream()
+                .map(entry -> entry.getKey().getColorType().getCnName() + "的" + entry.getKey().getShapeType().getName() + ":" + entry.getValue())
+                .collect(Collectors.joining("\n"));
     }
 
 

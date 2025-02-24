@@ -76,4 +76,8 @@ public class ShapeDetectionInput {
      * 斜率误差
      */
     private double slopeTolerableError = 30;
+
+    public ShapeDetectionInput(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
 }

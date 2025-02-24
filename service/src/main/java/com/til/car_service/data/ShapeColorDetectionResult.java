@@ -9,11 +9,11 @@ import org.opencv.core.MatOfPoint;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShapeDetectionResult {
+public class ShapeColorDetectionResult {
 
     private ShapeDescribe[] shapeDescribes;
     private Bitmap outBitmap;
-
+    private String total;
 
     @Data
     @AllArgsConstructor
