@@ -1,0 +1,44 @@
+"D:\Program Files\JetBrains\CLion 2023.2.2\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=D:/Program Files/JetBrains/CLion 2023.2.2/bin/ninja/win/x64/ninja.exe" "-DCMAKE_C_COMPILER=D:/Program Files/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc.exe" "-DCMAKE_CXX_COMPILER=D:/Program Files/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-g++.exe" -G Ninja -S D:\Project\java\Android\8_Car2024_Synthetical_Example_v1.1\ocr\src\main\cpp -B D:\Project\java\Android\8_Car2024_Synthetical_Example_v1.1\ocr\src\main\cpp\cmake-build-debug
+CMake Warning (dev) at CMakeLists.txt:1 (project):
+  cmake_minimum_required() should be called prior to this top-level project()
+  call.  Please see the cmake-commands(7) manual for usage documentation of
+  both commands.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- The C compiler identification is GNU 10.3.1
+-- The CXX compiler identification is GNU 10.3.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - failed
+-- Check for working C compiler: D:/Program Files/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc.exe
+-- Check for working C compiler: D:/Program Files/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc.exe - broken
+CMake Error at D:/Program Files/JetBrains/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:67 (message):
+  The C compiler
+
+    "D:/Program Files/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: 'D:/Project/java/Android/8_Car2024_Synthetical_Example_v1.1/ocr/src/main/cpp/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-ri5g13'
+    
+    Run Build Command(s): "D:/Program Files/JetBrains/CLion 2023.2.2/bin/ninja/win/x64/ninja.exe" -v cmTC_c9ff1
+    [1/2] "D:\Program Files\gcc-arm-none-eabi-10.3-2021.10\bin\arm-none-eabi-gcc.exe"   -fdiagnostics-color=always -o CMakeFiles/cmTC_c9ff1.dir/testCCompiler.c.obj -c D:/Project/java/Android/8_Car2024_Synthetical_Example_v1.1/ocr/src/main/cpp/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-ri5g13/testCCompiler.c
+    [2/2] C:\WINDOWS\system32\cmd.exe /C "cd . && "D:\Program Files\gcc-arm-none-eabi-10.3-2021.10\bin\arm-none-eabi-gcc.exe"   CMakeFiles/cmTC_c9ff1.dir/testCCompiler.c.obj -o cmTC_c9ff1.exe -Wl,--out-implib,libcmTC_c9ff1.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+    FAILED: cmTC_c9ff1.exe 
+    C:\WINDOWS\system32\cmd.exe /C "cd . && "D:\Program Files\gcc-arm-none-eabi-10.3-2021.10\bin\arm-none-eabi-gcc.exe"   CMakeFiles/cmTC_c9ff1.dir/testCCompiler.c.obj -o cmTC_c9ff1.exe -Wl,--out-implib,libcmTC_c9ff1.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+    d:/program files/gcc-arm-none-eabi-10.3-2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/bin/ld.exe: unrecognized option '--major-image-version'
+    d:/program files/gcc-arm-none-eabi-10.3-2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/bin/ld.exe: use the --help option for usage information
+    collect2.exe: error: ld returned 1 exit status
+    ninja: build stopped: subcommand failed.
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:1 (project)
+
+
+-- Configuring incomplete, errors occurred!

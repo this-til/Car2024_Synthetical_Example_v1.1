@@ -1,0 +1,62 @@
+plugins {
+    id 'com.android.library'
+}
+
+android { 
+    namespace 'com.yolov8ncnn'
+    compileSdk compile_sdk_version
+    ndkVersion ndk_version
+    buildToolsVersion build_tool_version
+    
+    defaultConfig {
+        minSdk min_sdk_version
+        targetSdkVersion target_sdk_version
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility source_compatibility
+        targetCompatibility target_compatibility
+    }
+    externalNativeBuild {
+        cmake {
+            version "3.22.1" // 或者其他你已安装且稳定的版本
+            path file('src/main/jni/CMakeLists.txt')
+        }
+    }
+    
+}
+
+dependencies {
+
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.4.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.code.gson:gson:2.10'
+    implementation 'com.google.mlkit:barcode-scanning:17.2.0'
+
+    implementation 'com.github.HyperInspire:hyperlpr3-android-sdk:1.0.3'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+}

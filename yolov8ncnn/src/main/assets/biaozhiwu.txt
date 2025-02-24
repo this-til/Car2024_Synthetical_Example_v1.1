@@ -1,0 +1,10 @@
+﻿Straight
+turn_left
+turn_right
+U_turn
+Speed_limit_40
+no_U
+No_Left
+No_right
+No_pass
+No_Straight
