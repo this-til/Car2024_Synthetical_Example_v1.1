@@ -57,7 +57,7 @@ public class Service extends android.app.Service {
 
         //ocrEngine = new OcrEngine(this);
         System.loadLibrary("yolov8ncnn");
-        
+
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
         analyzer = MLDocumentSkewCorrectionAnalyzerFactory.getInstance().getDocumentSkewCorrectionAnalyzer(setting);
@@ -111,8 +111,8 @@ public class Service extends android.app.Service {
     public CompletableFuture<QrRecognitionResult> qrRecognitionAsync(Bitmap bitmap) {
         return CompletableFuture
                 .supplyAsync(() -> InputImage.fromBitmap(bitmap, 0))
-                .thenCompose(image -> TaskUtil.convert(scanner.process(image)))
-                .thenApply(list -> {
+                .thenComposeAsync(image -> TaskUtil.convert(scanner.process(image)))
+                .thenApplyAsync(list -> {
                     if (list == null) {
                         return null;
                     }
@@ -533,8 +533,18 @@ public class Service extends android.app.Service {
     }
 
 
-    public <I extends IItem> CompletableFuture<IItem.ItemCell<I>> yolov8Recognize(Bitmap bitmap, IModel<I> model) {
-        
+    /***
+     * 使用模型识别
+     */
+    public <I extends IItem> CompletableFuture<IItem.ItemCell<I>[]> yolov8Detect(Bitmap bitmap, IModel<I> model) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (!model.isLoaded()) {
+                model.loadModel(getAssets());
+            }
+            return model.detect(bitmap);
+        });
     }
     
+    
+
 }

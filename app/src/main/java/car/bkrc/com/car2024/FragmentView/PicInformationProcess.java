@@ -33,6 +33,7 @@ import com.huawei.hms.mlsdk.dsc.MLDocumentSkewDetectResult;
 import com.til.car_service.Service;
 import com.til.car_service.data.OcrInput;
 import com.til.util.CharactersUtil;
+import com.yolov8ncnn.IModel;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -91,18 +92,17 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
             exitFragment();
         } else if (id == R.id.landmark_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
-
+                            picrectext_tv.setText("交通识别标志物");
+                            picrec_iv.setImageBitmap(picBitmap);
                         });
-                        //TODO 识别标志物,需要二次开发！
-                        picrectext_tv.setText("识别标志物,需要二次开发！");
-                        picrec_iv.setImageBitmap(picBitmap);
                         return picBitmap;
-                    });
+                    })
+                    .thenComposeAsync(picBitmap -> service.yolov8Recognize(picBitmap, IModel.TRAFFIC_SIGN_MODEL));
         } else if (id == R.id.mask_all_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
 
                         });
@@ -114,7 +114,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
         } else if (id == R.id.qr_all_btn) {
             // 处理识别二维码点击事件的代码
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
                             picrectext_tv.setText("识别二维码");
                             picrec_iv.setImageBitmap(picBitmap);
@@ -122,7 +122,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         return picBitmap;
                     })
                     .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
-                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                         if (result.getBarcodes().length==0) {
                             picrectext_tv.setText("未识别到二维码！");
                             //RecDialog.createLoadingDialog(getContext(), result.getBitmap(), "二维码识别", "未识别到二维码！");
@@ -133,7 +133,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                     }));
         } else if (id == R.id.carplate_all_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
                             picrectext_tv.setText("识别车牌号");
                             picrec_iv.setImageBitmap(picBitmap);
@@ -141,7 +141,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         return picBitmap;
                     })
                     .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
-                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                         if (result.getPlates().length == 0) {
                             picrectext_tv.setText("未识别到车牌！");
                             return;
@@ -151,7 +151,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                     }));
         } else if (id == R.id.ocrrec_all_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
                             picrectext_tv.setText("ocr识别");
                             picrec_iv.setImageBitmap(picBitmap);
@@ -159,13 +159,13 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         return picBitmap;
                     })
                     .thenCompose(picBitmap -> service.ocrAsync(new OcrInput(picBitmap)))
-                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                         picrec_iv.setImageBitmap(result.getOutBitmap());
                         picrectext_tv.setText(CharactersUtil.removeSpecialCharactersExceptChinese(result.getOcrResult().getStrRes()));
                     }));
         } else if (id == R.id.tracfficrec_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
                             picrectext_tv.setText("识别交通灯颜色");
                             picrec_iv.setImageBitmap(picBitmap);
@@ -174,14 +174,14 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                         return picBitmap;
                     })
                     .thenCompose(picBitmap -> service.trafficLightCheckAsync(picBitmap))
-                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                         picrec_iv.setImageBitmap(result.getOutImage());
                         picrectext_tv.setText(result.getTotal());
                     }));
             // 处理交通灯识别点击事件的代码
         } else if (id == R.id.cartype_all_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
 
                         });
@@ -193,7 +193,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
 
         } else if (id == R.id.tracfficsign_all_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
 
                         });
@@ -205,7 +205,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
 
         } else if (id == R.id.graphic_color_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
 
                         });
@@ -217,7 +217,7 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
 
         } else if (id == R.id.graphic_shape_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
 
                         });
@@ -227,15 +227,15 @@ public class PicInformationProcess extends Fragment implements View.OnClickListe
                     });
         } else if (id == R.id.opencv_shape_btn) {
             hdBitmapAsync
-                    .thenApply(picBitmap -> {
+                    .thenApplyAsync(picBitmap -> {
                         requireActivity().runOnUiThread(() -> {
                             picrectext_tv.setText("边缘检测");
                             picrec_iv.setImageBitmap(picBitmap);
                         });
                         return picBitmap;
                     })
-                    .thenCompose(picBitmap -> service.findCornerAsync(picBitmap))
-                    .thenAccept(result -> requireActivity().runOnUiThread(() -> {
+                    .thenComposeAsync(picBitmap -> service.findCornerAsync(picBitmap))
+                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                         picrec_iv.setImageBitmap(result.getOutBitmap());
                     }));
         } else if (id == R.id.vga_qr_btn) {

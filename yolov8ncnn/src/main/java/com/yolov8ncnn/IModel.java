@@ -28,10 +28,11 @@ public interface IModel<I extends IItem> {
     void loadModel(AssetManager mgr);
 
     IItem.ItemCell<I>[] detect(Bitmap bitmap);
+    
+    boolean isLoaded();
 
 
     @Getter
-    @AllArgsConstructor
     class Model<I extends IItem> implements IModel<I> {
 
         private String modelName;
@@ -39,6 +40,7 @@ public interface IModel<I extends IItem> {
         private Function<Integer, I> asItem;
         private String extractBlobName = "output0";
         private boolean useGpu;
+        private boolean loaded;
 
         public Model(String modelName, int itemSize, Function<Integer, I> asItem) {
             this.modelName = modelName;
@@ -59,6 +61,9 @@ public interface IModel<I extends IItem> {
 
         @Override
         public IItem.ItemCell<I>[] detect(Bitmap bitmap) {
+            if (!loaded) {
+                throw new RuntimeException("model not loaded");
+            }
             Yolov8Ncnn.Obj[] detect = Yolov8Ncnn.detect(bitmap, getModelName());
             //noinspection unchecked
             return Arrays.stream(detect)
