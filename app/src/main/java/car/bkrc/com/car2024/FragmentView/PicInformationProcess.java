@@ -91,229 +91,174 @@ public class PicInformationProcess extends Fragment {
      */
     @SuppressLint("SetTextI18n")
     private void initView(View view) {
-        view.findViewById(R.id.landmark_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别标识物...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        //TODO 
-                        return picBitmap;
+        view.findViewById(R.id.landmark_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别标识物...");
+                        picrec_iv.setImageBitmap(picBitmap);
                     });
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.mask_all_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别人脸佩戴口罩...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.MASK_MODEL))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getStatisticalDescription());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.qr_all_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别二维码...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getTotal());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.carplate_all_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别车牌号...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getTotal());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.ocrrec_all_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在进行ocr识别...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenCompose(picBitmap -> service.ocrAsync(new OcrInput(picBitmap)))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                        picrectext_tv.setText(CharactersUtil.removeSpecialCharactersExceptChinese(result.getOcrResult().getStrRes()));
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.tracfficrec_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别交通灯颜色...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenCompose(picBitmap -> service.trafficLightCheckAsync(picBitmap))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrec_iv.setImageBitmap(result.getOutImage());
-                        picrectext_tv.setText(result.getTotal());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.tracfficrec_btn_yolo).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别交通灯颜色...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenCompose(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_LIGHT_MODEL))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getStatisticalDescription());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.cartype_all_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别车牌号...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getTotal());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.tracfficsign_all_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别交通识别标志物...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getStatisticalDescription());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.shape_color_detection).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别形状和颜色...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenComposeAsync(picBitmap -> service.shapeColorDetectionAsync(new ShapeDetectionInput(picBitmap)))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText(result.getTotal());
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.shape_color_detection_yolo).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别形状和颜色...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
+                    //TODO
+                    return picBitmap;
+                })));
+        view.findViewById(R.id.mask_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别人脸佩戴口罩...");
+                        picrec_iv.setImageBitmap(picBitmap);
                     });
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.graphic_color_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("正在识别图形颜色...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        //TODO 
-                        return picBitmap;
+                    return picBitmap;
+                })
+                .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.MASK_MODEL))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getStatisticalDescription());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.qr_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别二维码...");
+                        picrec_iv.setImageBitmap(picBitmap);
                     });
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.graphic_shape_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("识别图形形状...");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        //TODO
-                        return picBitmap;
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getTotal());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.carplate_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别车牌号...");
+                        picrec_iv.setImageBitmap(picBitmap);
                     });
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.opencv_shape_btn).setOnClickListener(v -> {
-            CompletableFuture<Bitmap> completableFuture = LeftFragment.INSTANCE.getHDBitmapAsync();
-            completableFuture
-                    .thenApplyAsync(picBitmap -> {
-                        requireActivity().runOnUiThread(() -> {
-                            picrectext_tv.setText("边缘检测");
-                            picrec_iv.setImageBitmap(picBitmap);
-                        });
-                        return picBitmap;
-                    })
-                    .thenComposeAsync(picBitmap -> service.findCornerAsync(picBitmap))
-                    .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                        picrec_iv.setImageBitmap(result.getOutBitmap());
-                    }));
-            addExceptionally(completableFuture);
-        });
-        view.findViewById(R.id.vga_qr_btn).setOnClickListener(v -> {
-            FirstActivity.Connect_Transport.qr_rec(1);
-        });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getTotal());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.ocrrec_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在进行ocr识别...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.ocrAsync(new OcrInput(picBitmap)))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                    picrectext_tv.setText(CharactersUtil.removeSpecialCharactersExceptChinese(result.getOcrResult().getStrRes()));
+                }))));
+        view.findViewById(R.id.tracfficrec_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别交通灯颜色...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.trafficLightCheckAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrec_iv.setImageBitmap(result.getOutImage());
+                    picrectext_tv.setText(result.getTotal());
+                }))));
+        view.findViewById(R.id.tracfficrec_btn_yolo).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别交通灯颜色...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_LIGHT_MODEL))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getStatisticalDescription());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.cartype_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别车牌号...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getTotal());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.tracfficsign_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别交通识别标志物...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getStatisticalDescription());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.shape_color_detection).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别形状和颜色...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenComposeAsync(picBitmap -> service.shapeColorDetectionAsync(new ShapeDetectionInput(picBitmap)))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getTotal());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.shape_color_detection_yolo).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别形状和颜色...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.SHAPE_AND_COLOR_MODEL))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getStatisticalDescription());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.graphic_color_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别图形颜色...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    //TODO
+                    return picBitmap;
+                })));
+        view.findViewById(R.id.graphic_shape_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("识别图形形状...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    //TODO
+                    return picBitmap;
+                })));
+        view.findViewById(R.id.opencv_shape_btn).setOnClickListener(v -> addExceptionally(addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("边缘检测");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenComposeAsync(picBitmap -> service.findCornerAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> picrec_iv.setImageBitmap(result.getOutBitmap()))))));
+        view.findViewById(R.id.vga_qr_btn).setOnClickListener(v -> FirstActivity.Connect_Transport.qr_rec(1));
         view.findViewById(R.id.refresh_btn).setOnClickListener(v -> {
             picrectext_tv.setText("结果仅供参考！");
             picrec_iv.setImageBitmap(null);

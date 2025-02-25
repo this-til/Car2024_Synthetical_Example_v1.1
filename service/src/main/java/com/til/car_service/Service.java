@@ -59,7 +59,7 @@ public class Service extends android.app.Service {
     public void onCreate() {
         super.onCreate();
 
-        //ocrEngine = new OcrEngine(this);
+        ocrEngine = new OcrEngine(this);
         Yolov8Ncnn.init(getAssets());
 
         scanner = BarcodeScanning.getClient();

@@ -4,7 +4,6 @@ android {
     namespace 'com.til.cat_service'
     compileSdk compile_sdk_version
     ndkVersion ndk_version
-    buildToolsVersion build_tool_version
     
     defaultConfig {
         minSdk min_sdk_version

@@ -12,7 +12,7 @@ public class ShapeDetectionInput {
     /***
      * 放大比例
      */
-    private Scalar enlarge = new Scalar(4, 4);
+    private Scalar enlarge = new Scalar(2, 2);
 
     /***
      * 最小判定范围
