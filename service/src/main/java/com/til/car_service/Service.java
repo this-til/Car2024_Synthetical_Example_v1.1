@@ -4,10 +4,8 @@ import android.content.Intent;
 import android.graphics.*;
 import android.graphics.Rect;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-import androidx.annotation.RequiresApi;
 import com.benjaminwan.ocrlibrary.OcrEngine;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
@@ -18,6 +16,8 @@ import com.huawei.hms.mlsdk.dsc.*;
 import com.hyperai.hyperlpr3.HyperLPR3;
 import com.hyperai.hyperlpr3.bean.Plate;
 import com.til.car_service.data.*;
+import com.til.util.BitmapUtil;
+import com.til.util.CharactersUtil;
 import com.til.util.PointUtil;
 import com.til.util.TaskUtil;
 import com.til.util.tuple.Ptr;
@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class Service extends android.app.Service {
@@ -59,8 +60,8 @@ public class Service extends android.app.Service {
     public void onCreate() {
         super.onCreate();
 
-        ocrEngine = new OcrEngine(this);
         Yolov8Ncnn.init(getAssets());
+        ocrEngine = new OcrEngine(this);
 
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
@@ -217,6 +218,129 @@ public class Service extends android.app.Service {
      */
     public CompletionStage<LicensePlatesRecognitionResult> carTesseractAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> licensePlatesRecognition(bitmap));
+    }
+
+
+    /***
+     *  车牌识别的增强版
+     *  同时运用yolo
+     */
+    public CompletionStage<LicensePlatesRecognitionEnhancementResult> licensePlatesRecognitionEnhancement(Bitmap bitmap) {
+        final float BORDER_RATIO = 0.075f;
+
+        return yolov8DetectAsync(bitmap, IModel.CARD_MODEL)
+                .thenComposeAsync(result -> {
+
+                    IItem.ItemCell<IItem.CardType>[] itemCells = result.getItemCells();
+                    List<LicensePlatesRecognitionEnhancementResult.LicensePlate> licensePlateList = new ArrayList<>();
+                    List<CompletableFuture<?>> task = new ArrayList<>();
+
+                    int imgWidth = bitmap.getWidth();
+                    int imgHeight = bitmap.getHeight();
+
+                    CompletableFuture<Object> completableFuture = CompletableFuture.supplyAsync(() -> null);
+
+                    for(IItem.ItemCell<IItem.CardType> itemCell : itemCells) {
+                        RectF rect = itemCell.getRect();
+
+                        int left = (int) rect.left;
+                        int top = (int) rect.top;
+                        int right = (int) rect.right;
+                        int bottom = (int) rect.bottom;
+                        // 计算边界扩展量（动态根据检测框大小）
+
+                        int width = right - left;
+                        int height = bottom - top;
+                        int borderX = (int) (width * BORDER_RATIO);
+                        int borderY = (int) (height * BORDER_RATIO);
+
+                        // 扩展后的坐标
+                        int expandedLeft = Math.max(0, left - borderX);
+                        int expandedTop = Math.max(0, top - borderY);
+                        int expandedRight = Math.min(imgWidth - 1, right + borderX);
+                        int expandedBottom = Math.min(imgHeight - 1, bottom + borderY);
+
+                        // 确保最小尺寸
+                        if (expandedRight - expandedLeft < 10 || expandedBottom - expandedTop < 10) {
+                            continue; // 跳过无效区域
+                        }
+
+                        // 步骤2：执行裁剪
+                        Bitmap plateBitmap = Bitmap.createBitmap(
+                                bitmap,
+                                expandedLeft,
+                                expandedTop,
+                                expandedRight - expandedLeft,
+                                expandedBottom - expandedTop
+                        );
+
+                        /*CompletableFuture<?> voidCompletableFuture = completableFuture
+                                .thenComposeAsync(v -> findCornerAsync(plateBitmap))
+                                .exceptionally(e -> {
+                                    Log.e("Service", "Error: ", e);
+                                    return new FindCornerResult(null, null, null, plateBitmap);
+                                })
+                                .thenAcceptAsync(findCornerResult -> {
+                                    String ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(findCornerResult.getOutBitmap())).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                        return;
+                                    }
+                                    Bitmap bitmap_180 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 180);
+                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_180)).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                        return;
+                                    }
+                                    Bitmap bitmap_90 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 90);
+                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_90)).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                        return;
+                                    }
+                                    Bitmap bitmap_270 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 270);
+                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_270)).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                    }
+                                });*/
+
+                        AtomicBoolean complete = new AtomicBoolean(false);
+
+                        for(int i = 0; i < 4; i++) {
+                            int finalI = i;
+                            CompletableFuture<?> rotateCompletableFuture = CompletableFuture.supplyAsync(() -> {
+                                for(int ii = 0; ii < 6; ii++) {
+                                    if (complete.get()) {
+                                        return null;
+                                    }
+
+                                    Bitmap rotateBitmap = BitmapUtil.rotateBitmap(plateBitmap, finalI * 90 + ii * 15);
+                                    String ocr = ocr(new OcrInput(rotateBitmap)).getOcrResult().getStrRes();
+                                    Ptr<String> ocrPtr = new Ptr<>(null);
+                                    if (CharactersUtil.isLicensePlate(ocr, ocrPtr)) {
+                                        synchronized (complete) {
+                                            if (!complete.get()) {
+                                                complete.set(true);
+                                                licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocrPtr.getT()));
+                                                return null;
+                                            }
+                                        }
+                                    }
+
+
+                                }
+                                return null;
+                            });
+                            task.add(rotateCompletableFuture);
+                        }
+
+
+                    }
+
+                    return CompletableFuture.allOf(task.toArray(new CompletableFuture[0]))
+                            .thenApply(v -> new LicensePlatesRecognitionEnhancementResult(result, licensePlateList.toArray(new LicensePlatesRecognitionEnhancementResult.LicensePlate[0])));
+                });
     }
 
     /***
@@ -544,52 +668,35 @@ public class Service extends android.app.Service {
         return CompletableFuture.supplyAsync(() -> shapeColorDetection(shapeDetectionInput));
     }
 
+    public <I extends IItem> Yolov8DetectResult<I> yolov8Detect(Bitmap bitmap, IModel<I> model) {
+        if (!model.isLoaded()) {
+            model.loadModel();
+        }
+        IItem.ItemCell<I>[] detect = model.detect(bitmap);
+        Bitmap outBitmap = Bitmap.createBitmap(bitmap);
+
+        final Canvas canvas = new Canvas(outBitmap);
+        final Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(2.0f);
+
+        for(IItem.ItemCell<I> itemCell : detect) {
+            canvas.drawRect(itemCell.getRect(), paint);
+        }
+        return new Yolov8DetectResult<>(detect, outBitmap, handleStatisticalDescription(detect));
+
+    }
+
 
     /***
      * 使用模型识别
      */
-    public <I extends IItem> CompletionStage<Yolov8DetectResult<I>> yolov8Detect(Bitmap bitmap, IModel<I> model) {
+    public <I extends IItem> CompletionStage<Yolov8DetectResult<I>> yolov8DetectAsync(Bitmap bitmap, IModel<I> model) {
         if (!model.isLoaded()) {
             model.loadModel();
         }
-
-        CompletionStage<Object> completableFuture = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                ? CompletableFuture.completedStage(null)
-                : CompletableFuture.supplyAsync(() -> null);
-
-        //if (!model.isLoaded()) {
-        //    completableFuture.thenRunAsync(model::loadModel, ContextCompat.getMainExecutor(this));
-        //}
-
-        return completableFuture
-                .thenApplyAsync(_void -> model.detect(bitmap))
-                .thenApplyAsync(itemCells -> {
-                    Bitmap outBitmap = Bitmap.createBitmap(bitmap);
-
-                    final Canvas canvas = new Canvas(outBitmap);
-                    final Paint paint = new Paint();
-                    paint.setColor(Color.RED);
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(2.0f);
-
-                    for(IItem.ItemCell<I> itemCell : itemCells) {
-                        float x = itemCell.getX();
-                        float y = itemCell.getY();
-                        float w = itemCell.getW();
-                        float h = itemCell.getH();
-                        final RectF rect = new RectF(
-                                /*Math.max(0, x - w / 2),*/
-                                /*Math.max(0, y - h / 2),*/
-                                /*Math.min(bitmap.getWidth() - 1, x + w / 2),*/
-                                /*Math.min(bitmap.getHeight() - 1, y + h / 2)*/
-                                x, y, x + w, y + h
-                        );
-                        final RectF location = new RectF(rect);
-                        canvas.drawRect(location, paint);
-                    }
-                    return new Yolov8DetectResult<>(itemCells, outBitmap, handleStatisticalDescription(itemCells));
-                });
-
+        return CompletableFuture.supplyAsync(() -> yolov8Detect(bitmap, model));
     }
 
     /***

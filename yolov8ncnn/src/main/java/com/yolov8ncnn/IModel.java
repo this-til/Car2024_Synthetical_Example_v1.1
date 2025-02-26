@@ -21,8 +21,7 @@ public interface IModel<I extends IItem> {
     /***
      * 车辆牌照模型
      */
-    Model<IItem.CardType> CARD_MODEL = new Model<>("card", IItem.CardType.values().length, id -> IItem.CardType.values()[id])
-            .setTargetSizes(1280);
+    Model<IItem.CardType> CARD_MODEL = new Model<>("card", IItem.CardType.values().length, id -> IItem.CardType.values()[id]);
 
     /***
      * 交通识别标志物模型
@@ -37,8 +36,7 @@ public interface IModel<I extends IItem> {
     /***
      * 形状和颜色模型
      */
-    Model<IItem.ShapeAndColorType> SHAPE_AND_COLOR_MODEL = new Model<>("shape_and_color", IItem.ShapeAndColorType.values().length, id -> IItem.ShapeAndColorType.values()[id])
-            .setTargetSizes(1280);
+    Model<IItem.ShapeAndColorType> SHAPE_AND_COLOR_MODEL = new Model<>("shape_and_color", IItem.ShapeAndColorType.values().length, id -> IItem.ShapeAndColorType.values()[id]);
 
     /***
      * 口罩模型
@@ -71,9 +69,6 @@ public interface IModel<I extends IItem> {
         @Accessors(chain = true)
         private String extractBlobName = "output0";
 
-        @Setter
-        @Accessors(chain = true)
-        private int targetSizes = 640;
 
         @Setter
         @Accessors(chain = true)
@@ -105,9 +100,10 @@ public interface IModel<I extends IItem> {
                 throw new RuntimeException("model not loaded");
             }
             Yolov8Ncnn.Obj[] detect = Yolov8Ncnn.detect(bitmap, getModelName());
+
             //noinspection unchecked
             return Arrays.stream(detect)
-                    .map(item -> new IItem.ItemCell<>(asItem.apply(item.label), item.x, item.y, item.w, item.h, item.prob))
+                    .map(item -> new IItem.ItemCell<>(asItem.apply(item.label), new RectF(item.x, item.y, item.x + item.w, item.y + item.h), item.prob))
                     .toArray(IItem.ItemCell[]::new);
         }
     }

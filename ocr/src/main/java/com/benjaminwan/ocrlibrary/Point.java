@@ -2,11 +2,13 @@ package com.benjaminwan.ocrlibrary;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class Point implements Parcelable {
     private int x;
     private int y;

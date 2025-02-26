@@ -2,11 +2,21 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="Car2024_Synthetical_Example_v1.0.app">
-        <State />
-      </entry>
       <entry key="app">
-        <State />
+        <State>
+          <runningDeviceTargetSelectedWithDropDown>
+            <Target>
+              <type value="RUNNING_DEVICE_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="SERIAL_NUMBER" />
+                  <value value="10AE7924GL000UB" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </runningDeviceTargetSelectedWithDropDown>
+          <timeTargetWasSelectedWithDropDown value="2025-02-25T10:35:28.202161700Z" />
+        </State>
       </entry>
     </value>
   </component>

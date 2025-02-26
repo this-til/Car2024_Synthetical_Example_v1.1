@@ -14,8 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -49,14 +47,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import car.bkrc.com.car2024.ActivityView.FirstActivity;
 import car.bkrc.com.car2024.BitmapUtils.Full_screen;
 import car.bkrc.com.car2024.R;
 import car.bkrc.com.car2024.Utils.OtherUtil.ShapeRecognizeUtil;
-import car.bkrc.com.car2024.Utils.PicDisposeUtils.TrafficUtils;
 
 /**
  * 图像处理控制页面
@@ -108,7 +104,7 @@ public class PicInformationProcess extends Fragment {
                     });
                     return picBitmap;
                 })
-                .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.MASK_MODEL))
+                .thenComposeAsync(picBitmap -> service.yolov8DetectAsync(picBitmap, IModel.MASK_MODEL))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                     picrectext_tv.setText(result.getStatisticalDescription());
                     picrec_iv.setImageBitmap(result.getOutBitmap());
@@ -135,6 +131,32 @@ public class PicInformationProcess extends Fragment {
                     return picBitmap;
                 })
                 .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getTotal());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));   
+        view.findViewById(R.id.carplate_all_btn_yolo).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别车牌号(yolo)...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.yolov8DetectAsync(picBitmap, IModel.CARD_MODEL))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getStatisticalDescription());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));
+        view.findViewById(R.id.carplate_all_btn_enhance).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别车牌号(增强)...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.licensePlatesRecognitionEnhancement(picBitmap))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                     picrectext_tv.setText(result.getTotal());
                     picrec_iv.setImageBitmap(result.getOutBitmap());
@@ -173,7 +195,7 @@ public class PicInformationProcess extends Fragment {
                     });
                     return picBitmap;
                 })
-                .thenCompose(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_LIGHT_MODEL))
+                .thenCompose(picBitmap -> service.yolov8DetectAsync(picBitmap, IModel.TRAFFIC_LIGHT_MODEL))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                     picrectext_tv.setText(result.getStatisticalDescription());
                     picrec_iv.setImageBitmap(result.getOutBitmap());
@@ -181,14 +203,14 @@ public class PicInformationProcess extends Fragment {
         view.findViewById(R.id.cartype_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
                 .thenApplyAsync(picBitmap -> {
                     requireActivity().runOnUiThread(() -> {
-                        picrectext_tv.setText("正在识别车牌号...");
+                        picrectext_tv.setText("正在识别车辆类型...");
                         picrec_iv.setImageBitmap(picBitmap);
                     });
                     return picBitmap;
                 })
-                .thenCompose(picBitmap -> service.carTesseractAsync(picBitmap))
+                .thenCompose(picBitmap -> service.yolov8DetectAsync(picBitmap, IModel.VEHICLE_MODEL))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
-                    picrectext_tv.setText(result.getTotal());
+                    picrectext_tv.setText(result.getStatisticalDescription());
                     picrec_iv.setImageBitmap(result.getOutBitmap());
                 }))));
         view.findViewById(R.id.tracfficsign_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
@@ -199,7 +221,7 @@ public class PicInformationProcess extends Fragment {
                     });
                     return picBitmap;
                 })
-                .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
+                .thenComposeAsync(picBitmap -> service.yolov8DetectAsync(picBitmap, IModel.TRAFFIC_SIGN_MODEL))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                     picrectext_tv.setText(result.getStatisticalDescription());
                     picrec_iv.setImageBitmap(result.getOutBitmap());
@@ -225,7 +247,7 @@ public class PicInformationProcess extends Fragment {
                     });
                     return picBitmap;
                 })
-                .thenComposeAsync(picBitmap -> service.yolov8Detect(picBitmap, IModel.SHAPE_AND_COLOR_MODEL))
+                .thenComposeAsync(picBitmap -> service.yolov8DetectAsync(picBitmap, IModel.SHAPE_AND_COLOR_MODEL))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                     picrectext_tv.setText(result.getStatisticalDescription());
                     picrec_iv.setImageBitmap(result.getOutBitmap());

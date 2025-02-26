@@ -243,6 +243,33 @@
                             android:textColor="@color/black"
                             android:textSize="12sp"/>
 
+
+                    <Button
+                            android:id="@+id/carplate_all_btn_yolo"
+                            android:layout_width="match_parent"
+                            android:layout_height="30dp"
+                            android:layout_marginTop="5dp"
+                            android:background="@drawable/reference_background"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="车牌号(yolo)"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"/>
+
+
+                    <Button
+                            android:id="@+id/carplate_all_btn_enhance"
+                            android:layout_width="match_parent"
+                            android:layout_height="30dp"
+                            android:layout_marginTop="5dp"
+                            android:background="@drawable/reference_background"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="车牌号(增强)"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"/>
+
+
                     <Button
                             android:id="@+id/ocrrec_all_btn"
                             android:layout_width="match_parent"

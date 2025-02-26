@@ -2,6 +2,7 @@ package com.benjaminwan.ocrlibrary;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class TextBlock implements Parcelable {
     private ArrayList<Point> boxPoint;
     private float boxScore;

@@ -156,10 +156,7 @@ public interface IItem {
     @NoArgsConstructor
     class ItemCell<I extends IItem> {
         private I item;
-        private float x;
-        private float y;
-        private float w;
-        private float h;
+        private RectF rect;
         private float prob;
     }
 
