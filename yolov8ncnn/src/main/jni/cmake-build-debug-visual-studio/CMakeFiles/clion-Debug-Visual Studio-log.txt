@@ -1,0 +1,43 @@
+"D:\Program Files\JetBrains\CLion 2023.2.2\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=D:/Program Files/JetBrains/CLion 2023.2.2/bin/ninja/win/x64/ninja.exe" -G Ninja -S D:\Project\java\Android\8_Car2024_Synthetical_Example_v1.1\yolov8Module\src\main\jni -B D:\Project\java\Android\8_Car2024_Synthetical_Example_v1.1\yolov8Module\src\main\jni\cmake-build-debug-visual-studio
+CMake Warning (dev) at CMakeLists.txt:1 (project):
+  cmake_minimum_required() should be called prior to this top-level project()
+  call.  Please see the cmake-commands(7) manual for usage documentation of
+  both commands.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- The C compiler identification is MSVC 19.42.34435.0
+-- The CXX compiler identification is MSVC 19.42.34435.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - failed
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe - broken
+CMake Error at D:/Program Files/JetBrains/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:67 (message):
+  The C compiler
+
+    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: 'D:/Project/java/Android/8_Car2024_Synthetical_Example_v1.1/yolov8Module/src/main/jni/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-eo3n5z'
+    
+    Run Build Command(s): "D:/Program Files/JetBrains/CLion 2023.2.2/bin/ninja/win/x64/ninja.exe" -v cmTC_79778
+    [1/2] C:\PROGRA~1\MICROS~1\2022\COMMUN~2\VC\Tools\MSVC\14.42.34433\bin\Hostx64\x64\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\cmTC_79778.dir\testCCompiler.c.obj /FdCMakeFiles\cmTC_79778.dir\ /FS -c D:\Project\java\Android\8_Car2024_Synthetical_Example_v1.1\yolov8Module\src\main\jni\cmake-build-debug-visual-studio\CMakeFiles\CMakeScratch\TryCompile-eo3n5z\testCCompiler.c
+    [2/2] C:\WINDOWS\system32\cmd.exe /C "cd . && "D:\Program Files\JetBrains\CLion 2023.2.2\bin\cmake\win\x64\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_79778.dir --rc=rc --mt=CMAKE_MT-NOTFOUND --manifests  -- C:\PROGRA~1\MICROS~1\2022\COMMUN~2\VC\Tools\MSVC\14.42.34433\bin\Hostx64\x64\link.exe /nologo CMakeFiles\cmTC_79778.dir\testCCompiler.c.obj  /out:cmTC_79778.exe /implib:cmTC_79778.lib /pdb:cmTC_79778.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+    FAILED: cmTC_79778.exe 
+    C:\WINDOWS\system32\cmd.exe /C "cd . && "D:\Program Files\JetBrains\CLion 2023.2.2\bin\cmake\win\x64\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_79778.dir --rc=rc --mt=CMAKE_MT-NOTFOUND --manifests  -- C:\PROGRA~1\MICROS~1\2022\COMMUN~2\VC\Tools\MSVC\14.42.34433\bin\Hostx64\x64\link.exe /nologo CMakeFiles\cmTC_79778.dir\testCCompiler.c.obj  /out:cmTC_79778.exe /implib:cmTC_79778.lib /pdb:cmTC_79778.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+    RC Pass 1: command "rc /fo CMakeFiles\cmTC_79778.dir/manifest.res CMakeFiles\cmTC_79778.dir/manifest.rc" failed (exit code 0) with the following output:
+    no such file or directory
+    ninja: build stopped: subcommand failed.
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:1 (project)
+
+
+-- Configuring incomplete, errors occurred!

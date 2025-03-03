@@ -16,9 +16,14 @@ import com.huawei.hms.mlsdk.dsc.*;
 import com.hyperai.hyperlpr3.HyperLPR3;
 import com.hyperai.hyperlpr3.bean.Plate;
 import com.til.car_service.data.*;
+import com.til.util.BitmapUtil;
+import com.til.util.CharactersUtil;
 import com.til.util.PointUtil;
 import com.til.util.TaskUtil;
 import com.til.util.tuple.Ptr;
+import com.yolov8ncnn.IItem;
+import com.yolov8ncnn.IModel;
+import com.yolov8ncnn.Yolov8Ncnn;
 import org.opencv.android.Utils;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
@@ -26,10 +31,12 @@ import org.opencv.imgproc.Moments;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class Service extends android.app.Service {
 
@@ -53,15 +60,16 @@ public class Service extends android.app.Service {
     public void onCreate() {
         super.onCreate();
 
-        LibraryLoader.initLibraries();
-        
+        Yolov8Ncnn.init(getAssets());
         ocrEngine = new OcrEngine(this);
+
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
         analyzer = MLDocumentSkewCorrectionAnalyzerFactory.getInstance().getDocumentSkewCorrectionAnalyzer(setting);
-        
-        
+
+
     }
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -78,7 +86,7 @@ public class Service extends android.app.Service {
     /***
      * ocr文字识别-异步
      */
-    public CompletableFuture<OcrResult> ocrAsync(OcrInput characterRecognitionInput) {
+    public CompletionStage<OcrResult> ocrAsync(OcrInput characterRecognitionInput) {
         return CompletableFuture.supplyAsync(() -> ocr(characterRecognitionInput));
     }
 
@@ -105,11 +113,11 @@ public class Service extends android.app.Service {
     /***
      * 二维码
      */
-    public CompletableFuture<QrRecognitionResult> qrRecognitionAsync(Bitmap bitmap) {
+    public CompletionStage<QrRecognitionResult> qrRecognitionAsync(Bitmap bitmap) {
         return CompletableFuture
                 .supplyAsync(() -> InputImage.fromBitmap(bitmap, 0))
-                .thenCompose(image -> TaskUtil.convert(scanner.process(image)))
-                .thenApply(list -> {
+                .thenComposeAsync(image -> TaskUtil.convert(scanner.process(image)))
+                .thenApplyAsync(list -> {
                     if (list == null) {
                         return null;
                     }
@@ -149,7 +157,7 @@ public class Service extends android.app.Service {
                     return new QrRecognitionResult(
                             barcodes,
                             rawValues,
-                            stringBuilder.toString(),
+                            barcodes.length == 0 ? "未识别到二维码" : stringBuilder.toString(),
                             outBitmap
                     );
 
@@ -157,7 +165,7 @@ public class Service extends android.app.Service {
     }
 
     /***
-     * 车牌识别同步
+     * 车牌识别同步(官方示例)
      */
     public LicensePlatesRecognitionResult licensePlatesRecognition(Bitmap bitmap) {
         Bitmap bcopy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -195,20 +203,150 @@ public class Service extends android.app.Service {
             };
         }
 
-        return new LicensePlatesRecognitionResult(plates, licensePlates, copyShow, String.join("\n", licensePlates));
+        return new LicensePlatesRecognitionResult(
+                plates,
+                licensePlates,
+                copyShow,
+                licensePlates.length > 0
+                        ? String.join("\n", licensePlates)
+                        : "未识别到车牌"
+        );
     }
 
     /***
      * 车牌识别异步
      */
-    public CompletableFuture<LicensePlatesRecognitionResult> carTesseractAsync(Bitmap bitmap) {
+    public CompletionStage<LicensePlatesRecognitionResult> carTesseractAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> licensePlatesRecognition(bitmap));
+    }
+
+
+    /***
+     *  车牌识别的增强版
+     *  同时运用yolo
+     */
+    public CompletionStage<LicensePlatesRecognitionEnhancementResult> licensePlatesRecognitionEnhancement(Bitmap bitmap) {
+        final float BORDER_RATIO = 0.075f;
+
+        return yolov8DetectAsync(bitmap, IModel.CARD_MODEL)
+                .thenComposeAsync(result -> {
+
+                    IItem.ItemCell<IItem.CardType>[] itemCells = result.getItemCells();
+                    List<LicensePlatesRecognitionEnhancementResult.LicensePlate> licensePlateList = new ArrayList<>();
+                    List<CompletableFuture<?>> task = new ArrayList<>();
+
+                    int imgWidth = bitmap.getWidth();
+                    int imgHeight = bitmap.getHeight();
+
+                    CompletableFuture<Object> completableFuture = CompletableFuture.supplyAsync(() -> null);
+
+                    for(IItem.ItemCell<IItem.CardType> itemCell : itemCells) {
+                        RectF rect = itemCell.getRect();
+
+                        int left = (int) rect.left;
+                        int top = (int) rect.top;
+                        int right = (int) rect.right;
+                        int bottom = (int) rect.bottom;
+                        // 计算边界扩展量（动态根据检测框大小）
+
+                        int width = right - left;
+                        int height = bottom - top;
+                        int borderX = (int) (width * BORDER_RATIO);
+                        int borderY = (int) (height * BORDER_RATIO);
+
+                        // 扩展后的坐标
+                        int expandedLeft = Math.max(0, left - borderX);
+                        int expandedTop = Math.max(0, top - borderY);
+                        int expandedRight = Math.min(imgWidth - 1, right + borderX);
+                        int expandedBottom = Math.min(imgHeight - 1, bottom + borderY);
+
+                        // 确保最小尺寸
+                        if (expandedRight - expandedLeft < 10 || expandedBottom - expandedTop < 10) {
+                            continue; // 跳过无效区域
+                        }
+
+                        // 步骤2：执行裁剪
+                        Bitmap plateBitmap = Bitmap.createBitmap(
+                                bitmap,
+                                expandedLeft,
+                                expandedTop,
+                                expandedRight - expandedLeft,
+                                expandedBottom - expandedTop
+                        );
+
+                        /*CompletableFuture<?> voidCompletableFuture = completableFuture
+                                .thenComposeAsync(v -> findCornerAsync(plateBitmap))
+                                .exceptionally(e -> {
+                                    Log.e("Service", "Error: ", e);
+                                    return new FindCornerResult(null, null, null, plateBitmap);
+                                })
+                                .thenAcceptAsync(findCornerResult -> {
+                                    String ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(findCornerResult.getOutBitmap())).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                        return;
+                                    }
+                                    Bitmap bitmap_180 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 180);
+                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_180)).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                        return;
+                                    }
+                                    Bitmap bitmap_90 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 90);
+                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_90)).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                        return;
+                                    }
+                                    Bitmap bitmap_270 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 270);
+                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_270)).getOcrResult().getStrRes());
+                                    if (CharactersUtil.isLicensePlate(ocr)) {
+                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
+                                    }
+                                });*/
+
+                        AtomicBoolean complete = new AtomicBoolean(false);
+
+                        for(int i = 0; i < 4; i++) {
+                            int finalI = i;
+                            CompletableFuture<?> rotateCompletableFuture = CompletableFuture.supplyAsync(() -> {
+                                for(int ii = 0; ii < 6; ii++) {
+                                    if (complete.get()) {
+                                        return null;
+                                    }
+
+                                    Bitmap rotateBitmap = BitmapUtil.rotateBitmap(plateBitmap, finalI * 90 + ii * 15);
+                                    String ocr = ocr(new OcrInput(rotateBitmap)).getOcrResult().getStrRes();
+                                    Ptr<String> ocrPtr = new Ptr<>(null);
+                                    if (CharactersUtil.isLicensePlate(ocr, ocrPtr)) {
+                                        synchronized (complete) {
+                                            if (!complete.get()) {
+                                                complete.set(true);
+                                                licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocrPtr.getT()));
+                                                return null;
+                                            }
+                                        }
+                                    }
+
+
+                                }
+                                return null;
+                            });
+                            task.add(rotateCompletableFuture);
+                        }
+
+
+                    }
+
+                    return CompletableFuture.allOf(task.toArray(new CompletableFuture[0]))
+                            .thenApply(v -> new LicensePlatesRecognitionEnhancementResult(result, licensePlateList.toArray(new LicensePlatesRecognitionEnhancementResult.LicensePlate[0])));
+                });
     }
 
     /***
      * 边缘检测
      */
-    public CompletableFuture<FindCornerResult> findCornerAsync(Bitmap bitmap) {
+    public CompletionStage<FindCornerResult> findCornerAsync(Bitmap bitmap) {
         
         
        /* return CompletableFuture.supplyAsync(() -> MLFrame.fromBitmap(bitmap))
@@ -289,7 +427,7 @@ public class Service extends android.app.Service {
     }
 
     /***
-     * 红路灯检测
+     * 红绿灯检测
      */
     public TrafficLightCheckResult trafficLightCheck(Bitmap bitmap) {
         int red = 0, yellow = 0, green = 0;
@@ -341,13 +479,13 @@ public class Service extends android.app.Service {
 
         if (red > yellow && red > green) {
             trafficLightState = TrafficLightState.RED;
-            total = "交通信号灯识别结果：红色";
+            total = "结果：红色";
         } else if (yellow > red && yellow > green) {
             trafficLightState = TrafficLightState.YELLOW;
-            total = "交通信号灯识别结果：黄色";
+            total = "结果：黄色";
         } else if (green > red && green > yellow) {
             trafficLightState = TrafficLightState.GREEN;
-            total = "交通信号灯识别结果：绿色";
+            total = "结果：绿色";
         } else {
             trafficLightState = TrafficLightState.NULL;
             total = "未识别到交通灯";
@@ -366,16 +504,16 @@ public class Service extends android.app.Service {
     }
 
     /***
-     * 红路灯检测异步
+     * 红绿灯检测异步
      */
-    public CompletableFuture<TrafficLightCheckResult> trafficLightCheckAsync(Bitmap bitmap) {
+    public CompletionStage<TrafficLightCheckResult> trafficLightCheckAsync(Bitmap bitmap) {
         return CompletableFuture.supplyAsync(() -> trafficLightCheck(bitmap));
     }
 
     /***
      * 形状检测
      */
-    public ShapeDetectionResult shapeDetection(ShapeDetectionInput shapeDetectionInput)  {
+    public ShapeColorDetectionResult shapeColorDetection(ShapeDetectionInput shapeDetectionInput) {
         int width = shapeDetectionInput.getBitmap().getWidth();
         int height = shapeDetectionInput.getBitmap().getHeight();
 
@@ -410,12 +548,12 @@ public class Service extends android.app.Service {
 
         List<MatOfPoint> contours = new ArrayList<>();
         List<MatOfPoint> _contours = new ArrayList<>();
-        List<ShapeDetectionResult.ShapeDescribe> resultList = new ArrayList<>();
+        List<ShapeColorDetectionResult.ShapeDescribe> resultList = new ArrayList<>();
 
         Mat hierarchy = new Mat();
         Imgproc.findContours(kerneled, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//查找轮廓
         double maxSize = width * height;
-        
+
         for(int i = 0; i < contours.size(); i++) {
             double area = Imgproc.contourArea(contours.get(i));
             if (area / maxSize > shapeDetectionInput.getMinJudgmentRange()) {
@@ -511,22 +649,83 @@ public class Service extends android.app.Service {
             if (shapeType == null) {
                 continue;
             }
-            resultList.add(new ShapeDetectionResult.ShapeDescribe(shapeType, colorType, contour));
+            resultList.add(new ShapeColorDetectionResult.ShapeDescribe(shapeType, colorType, contour));
             _contours.add(contour);
         }
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Imgproc.drawContours(outMat, _contours, -1, new Scalar(255, 0, 0), 5);
         org.opencv.android.Utils.matToBitmap(outMat, bitmap);
-        return new ShapeDetectionResult(resultList.toArray(new ShapeDetectionResult.ShapeDescribe[0]), bitmap);
+        ShapeColorDetectionResult.ShapeDescribe[] array = resultList.toArray(new ShapeColorDetectionResult.ShapeDescribe[0]);
+        return new ShapeColorDetectionResult(array, bitmap, handleStatisticalDescription(array));
 
     }
 
     /***
      * 形状检测-异步
      */
-    public CompletableFuture<ShapeDetectionResult> shapeDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
-        return CompletableFuture.supplyAsync(() -> shapeDetection(shapeDetectionInput));
+    public CompletionStage<ShapeColorDetectionResult> shapeColorDetectionAsync(ShapeDetectionInput shapeDetectionInput) {
+        return CompletableFuture.supplyAsync(() -> shapeColorDetection(shapeDetectionInput));
+    }
+
+    public <I extends IItem> Yolov8DetectResult<I> yolov8Detect(Bitmap bitmap, IModel<I> model) {
+        if (!model.isLoaded()) {
+            model.loadModel();
+        }
+        IItem.ItemCell<I>[] detect = model.detect(bitmap);
+        Bitmap outBitmap = Bitmap.createBitmap(bitmap);
+
+        final Canvas canvas = new Canvas(outBitmap);
+        final Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(2.0f);
+
+        for(IItem.ItemCell<I> itemCell : detect) {
+            canvas.drawRect(itemCell.getRect(), paint);
+        }
+        return new Yolov8DetectResult<>(detect, outBitmap, handleStatisticalDescription(detect));
+
+    }
+
+
+    /***
+     * 使用模型识别
+     */
+    public <I extends IItem> CompletionStage<Yolov8DetectResult<I>> yolov8DetectAsync(Bitmap bitmap, IModel<I> model) {
+        if (!model.isLoaded()) {
+            model.loadModel();
+        }
+        return CompletableFuture.supplyAsync(() -> yolov8Detect(bitmap, model));
+    }
+
+    /***
+     * 为识别结果生成描述
+     */
+    public static <I extends IItem> String handleStatisticalDescription(IItem.ItemCell<I>[] results) {
+        if (results.length == 0) {
+            return "未识别到";
+        }
+        Map<I, Integer> count = new HashMap<>();
+        for(IItem.ItemCell<I> result : results) {
+            count.put(result.getItem(), Objects.requireNonNullElse(count.get(result.getItem()), 0) + 1);
+        }
+        return count.entrySet().stream()
+                .map(entry -> entry.getKey().getName() + ":" + entry.getValue())
+                .collect(Collectors.joining("\n"));
+    }
+
+    public static String handleStatisticalDescription(ShapeColorDetectionResult.ShapeDescribe[] shapeDescribes) {
+        if (shapeDescribes.length == 0) {
+            return "未识别到";
+        }
+        Map<ShapeColorDetectionResult.ShapeDescribe, Integer> count = new HashMap<>();
+        for(ShapeColorDetectionResult.ShapeDescribe shapeDescribe : shapeDescribes) {
+            count.put(shapeDescribe, Objects.requireNonNullElse(count.get(shapeDescribe), 0) + 1);
+        }
+        return count.entrySet().stream()
+                .map(entry -> entry.getKey().getColorType().getCnName() + "的" + entry.getKey().getShapeType().getName() + ":" + entry.getValue())
+                .collect(Collectors.joining("\n"));
     }
 
 

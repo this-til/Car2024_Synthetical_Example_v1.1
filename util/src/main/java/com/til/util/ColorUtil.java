@@ -1,4 +1,4 @@
-﻿package com.til.util;
+package com.til.util;
 
 import android.graphics.Color;
 import org.opencv.core.*;

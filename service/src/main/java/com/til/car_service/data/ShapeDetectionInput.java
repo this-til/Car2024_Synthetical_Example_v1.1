@@ -1,4 +1,4 @@
-﻿package com.til.car_service.data;
+package com.til.car_service.data;
 
 import android.graphics.Bitmap;
 import lombok.Data;
@@ -12,7 +12,7 @@ public class ShapeDetectionInput {
     /***
      * 放大比例
      */
-    private Scalar enlarge = new Scalar(4, 4);
+    private Scalar enlarge = new Scalar(2, 2);
 
     /***
      * 最小判定范围
@@ -76,4 +76,8 @@ public class ShapeDetectionInput {
      * 斜率误差
      */
     private double slopeTolerableError = 30;
+
+    public ShapeDetectionInput(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
 }
