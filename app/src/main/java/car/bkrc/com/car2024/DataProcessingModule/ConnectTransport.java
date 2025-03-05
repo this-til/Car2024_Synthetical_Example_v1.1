@@ -37,7 +37,7 @@ public class ConnectTransport {
     public static DataInputStream bInputStream = null; // 数据输入流
     public static DataOutputStream bOutputStream = null; // 数据输出流
     public static Socket socket = null; // 套接字对象
-    public byte[] rbyte = new byte[50]; // 接收数据数组对象
+    public byte[] rbyte = new byte[256]; // 接收数据数组对象
     private Handler reHandler; // 数据接收器（广播）
     public short TYPE = 0xAA; // 帧头，主要区分
     public short MAJOR = 0x00; // 主指令

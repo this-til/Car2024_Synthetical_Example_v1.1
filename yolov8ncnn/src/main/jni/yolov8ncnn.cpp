@@ -37,15 +37,6 @@ static jfieldID probId;
 // 先定义返回的数据
 //ncnn::Mutex lock;
 
-const int target_sizes[] = {320,
-                            320,
-                            640,
-                            640,
-                            640,
-                            1280,
-                            640,
-                            640,
-                            1280,};
 const float mean_val[] = {103.53f, 116.28f, 123.675f};
 const float norm_val[] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
 
@@ -112,7 +103,7 @@ void init(JNIEnv* env, jobject thiz, jobject assetManager) {
 
 }
 
-void loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstring extractBlobName, jboolean useGpu) {
+void loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstring extractBlobName, jint targetSizes, jboolean useGpu) {
     const char* nativeModelName;
     const char* nativeExtractBlobName;
     std::string nativeModelNameStr;
@@ -124,7 +115,7 @@ void loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstr
         env->ThrowNew(env->FindClass("java/lang/UnsupportedOperationException"), "No GPU support");
         goto end;
     }
-
+ 
     nativeModelName = env->GetStringUTFChars(modelName, nullptr);
     nativeExtractBlobName = env->GetStringUTFChars(extractBlobName, nullptr);
 
@@ -150,7 +141,7 @@ void loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstr
     yolo->load(
             mgr,
             nativeModelName,
-            640,
+            targetSizes,
             mean_val,
             norm_val,
             useGpu
@@ -294,8 +285,8 @@ JNIEXPORT void JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_init(JNIEnv* env, jobject 
     init(env, thiz, assetManager);
 }
 
-JNIEXPORT void JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_loadModel(JNIEnv* env, jobject thiz, jstring modelName, int itemSize, jstring extractBlobName, jboolean useGpu)  {
-    loadModel(env, thiz, modelName, itemSize , extractBlobName, useGpu);
+JNIEXPORT void JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_loadModel(JNIEnv* env, jobject thiz, jstring modelName, jint itemSize, jstring extractBlobName,jint targetSizes, jboolean useGpu)  {
+    loadModel(env, thiz, modelName, itemSize , extractBlobName, targetSizes, useGpu);
 }
 
 JNIEXPORT jobjectArray JNICALL Java_com_yolov8ncnn_Yolov8Ncnn_detect(JNIEnv* env, jobject thiz, jobject bitmap, jstring modelName) {

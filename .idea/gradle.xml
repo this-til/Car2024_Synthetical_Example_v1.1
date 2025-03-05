@@ -10,8 +10,10 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/device" />
             <option value="$PROJECT_DIR$/ocr" />
             <option value="$PROJECT_DIR$/openCVLibrary343" />
+            <option value="$PROJECT_DIR$/problem" />
             <option value="$PROJECT_DIR$/service" />
             <option value="$PROJECT_DIR$/util" />
             <option value="$PROJECT_DIR$/yolov8ncnn" />
