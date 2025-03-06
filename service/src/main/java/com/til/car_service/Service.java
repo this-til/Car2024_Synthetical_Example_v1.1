@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import androidx.palette.graphics.Palette;
 import com.benjaminwan.ocrlibrary.OcrEngine;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
@@ -126,13 +127,28 @@ public class Service extends android.app.Service {
 
                     for(int i = 0; i < list.size(); i++) {
                         Barcode barcode = list.get(i);
+                        Rect rect = barcode.getBoundingBox();
+                        if (rect == null) {
+                            continue;
+                        }
+
+                        Palette generate = Palette.from(bitmap).setRegion(rect.left, rect.top, rect.right, rect.bottom).generate();
+
+                        Palette.Swatch dominantSwatch = generate.getDominantSwatch();
+                        ColorType colorType = ColorType.black;
+
+                        if (dominantSwatch != null) {
+                            int color = dominantSwatch.getRgb();
+                            colorType = ColorType.typGetSimilarColor(ColorUtil.argbToBgrScalar(color), null);
+                            // 处理颜色结果
+                        }
 
                         stringBuilder.append("二维码").append(i).append(':').append(' ').append(barcode.getRawValue()).append('\n');
 
-                        Rect rect = barcode.getBoundingBox();
+
                         // 画框
                         Paint paint = new Paint();
-                        paint.setColor(Color.GREEN);
+                        paint.setColor(ColorUtil.rgbScalarToArgb(colorType.getRgbColor()));
                         paint.setStyle(Paint.Style.STROKE);
                         paint.setStrokeWidth(5);
                         canvas.drawRect(rect, paint);
@@ -143,7 +159,7 @@ public class Service extends android.app.Service {
                         textPaint.setColor(Color.RED);
                         textPaint.setTextSize(30f);
                         textPaint.setStyle(Paint.Style.FILL);
-                        canvas.drawText("二维码：" + i, rect.left, rect.top - 10, textPaint); // 绘制文字
+                        canvas.drawText("二维码" + i + barcode.getRawValue(), rect.left, rect.top - 10, textPaint); // 绘制文字
                     }
 
                     return new QrRecognitionResult(
@@ -179,6 +195,11 @@ public class Service extends android.app.Service {
 
                     for(ColorType value : ColorType.values()) {
 
+                        if (value == ColorType.white) {
+                            //TODO 后续考录使用输入来筛选颜色
+                            continue;
+                        }
+
                         taskList.add(
                                 CompletableFuture.supplyAsync(() -> {
                                             Mat binaryMask = value.getBinaryMask(hsvMat);
@@ -199,7 +220,7 @@ public class Service extends android.app.Service {
                                                     Rect rect = barcode.getBoundingBox();
                                                     // 画框
                                                     Paint paint = new Paint();
-                                                    paint.setColor(Color.GREEN);
+                                                    paint.setColor(ColorUtil.rgbScalarToArgb(value.getRgbColor()));
                                                     paint.setStyle(Paint.Style.STROKE);
                                                     paint.setStrokeWidth(5);
                                                     canvas.drawRect(rect, paint);
@@ -207,10 +228,10 @@ public class Service extends android.app.Service {
                                                     // 绘制二维码顺序编号
 
                                                     Paint textPaint = new Paint();
-                                                    textPaint.setColor(ColorUtil.rgbaScalarToArgb(value.getRgbColor()));
+                                                    textPaint.setColor(ColorUtil.rgbScalarToArgb(value.getRgbColor()));
                                                     textPaint.setTextSize(30f);
                                                     textPaint.setStyle(Paint.Style.FILL);
-                                                    canvas.drawText("二维码：" + qeCellList.size(), rect.left, rect.top - 10, textPaint); // 绘制文字
+                                                    canvas.drawText("二维码" + qeCellList.size() + ":" + barcode.getRawValue(), rect.left, rect.top - 10, textPaint); // 绘制文字
 
                                                     qeCellList.add(new QrRecognitionResult.QeCell(barcode, barcode.getRawValue(), value));
                                                 }
@@ -221,7 +242,7 @@ public class Service extends android.app.Service {
                     }
 
                     return CompletableFuture.allOf(taskList.toArray(new CompletableFuture[0]))
-                            .thenApplyAsync(vv -> new QrRecognitionResult(qeCellList.toArray(new QrRecognitionResult.QeCell[0]), null, outBitmap));
+                            .thenApplyAsync(vv -> new QrRecognitionResult(qeCellList.toArray(new QrRecognitionResult.QeCell[0]), outBitmap));
 
                 });
 

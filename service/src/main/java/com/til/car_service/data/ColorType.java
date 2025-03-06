@@ -144,4 +144,5 @@ public enum ColorType {
         }
         return similarColor;
     }
+    
 }

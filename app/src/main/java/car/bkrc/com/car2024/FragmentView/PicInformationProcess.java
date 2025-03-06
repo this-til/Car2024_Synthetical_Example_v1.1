@@ -90,6 +90,7 @@ public class PicInformationProcess extends Fragment {
         view.findViewById(R.id.landmark_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
                 .thenApplyAsync(picBitmap -> {
                     requireActivity().runOnUiThread(() -> {
+
                         picrectext_tv.setText("正在识别标识物...");
                         picrec_iv.setImageBitmap(picBitmap);
                     });
