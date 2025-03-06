@@ -574,7 +574,7 @@ public class LeftFragment extends Fragment implements VLCPlayer.VLCPlayerCallbac
         }
         return CompletableFuture.supplyAsync(() -> {
             try {
-                if (playRTSPstate && scaleFactor > 1) {
+                if (playRTSPstate) {
                     return getVlcPlayerHDBitmap();
                 }
                 return textureView.getBitmap();

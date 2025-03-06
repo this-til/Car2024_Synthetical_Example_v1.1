@@ -86,5 +86,71 @@ public class ColorUtil {
         return Core.mean(mat);
     }
 
+    /***
+     * RGB转HSV工具方法
+     */
+    public static Scalar rgbToHsv(Scalar rgb) {
+        Mat rgbMat = new Mat(1, 1, CvType.CV_8UC3);
+        rgbMat.put(0, 0, rgb.val[0], rgb.val[1], rgb.val[2]);
+        Mat hsvMat = new Mat();
+        Imgproc.cvtColor(rgbMat, hsvMat, Imgproc.COLOR_RGB2HSV);
+        double[] hsv = hsvMat.get(0, 0);
+        rgbMat.release();
+        hsvMat.release();
+        return new Scalar(hsv[0], hsv[1], hsv[2]);
+    }
 
+    /**
+     * 将BGR格式的Scalar转换为ARGB整型颜色
+     * @param bgrScalar OpenCV标准的BGR三通道颜色（值范围0-255）
+     * @return ARGB8888格式的颜色整数
+     */
+    public static int bgrScalarToArgb(Scalar bgrScalar) {
+        int blue = clamp((int) bgrScalar.val[0]);
+        int green = clamp((int) bgrScalar.val[1]);
+        int red = clamp((int) bgrScalar.val[2]);
+        return 0xFF << 24 | (red << 16) | (green << 8) | blue;
+    }
+
+    /**
+     * 将RGB格式的Scalar转换为ARGB整型颜色
+     * @param rgbScalar RGB三通道颜色（值范围0-255）
+     * @return ARGB8888格式的颜色整数
+     */
+    public static int rgbScalarToArgb(Scalar rgbScalar) {
+        int red = clamp((int) rgbScalar.val[0]);
+        int green = clamp((int) rgbScalar.val[1]);
+        int blue = clamp((int) rgbScalar.val[2]);
+        return 0xFF << 24 | (red << 16) | (green << 8) | blue;
+    }
+
+    /**
+     * 带透明度的转换（RGBA转ARGB）
+     * @param rgbaScalar 四通道颜色（R, G, B, A）
+     * @return ARGB8888格式的颜色整数
+     */
+    public static int rgbaScalarToArgb(Scalar rgbaScalar) {
+        int red = clamp((int) rgbaScalar.val[0]);
+        int green = clamp((int) rgbaScalar.val[1]);
+        int blue = clamp((int) rgbaScalar.val[2]);
+        int alpha = clamp((int) rgbaScalar.val[3]);
+        return (alpha << 24) | (red << 16) | (green << 8) | blue;
+    }
+
+    // 确保颜色值在0-255范围内
+    private static int clamp(int value) {
+        return Math.max(0, Math.min(255, value));
+    }
+
+    /**
+     * 从ARGB整型颜色转换回BGR格式Scalar
+     * @param argbColor ARGB8888格式的颜色整数
+     * @return OpenCV标准的BGR三通道Scalar
+     */
+    public static Scalar argbToBgrScalar(int argbColor) {
+        int red = (argbColor >> 16) & 0xFF;
+        int green = (argbColor >> 8) & 0xFF;
+        int blue = argbColor & 0xFF;
+        return new Scalar(blue, green, red);
+    }
 }

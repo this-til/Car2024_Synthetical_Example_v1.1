@@ -32,7 +32,7 @@ public class Yolov8Ncnn {
      * 加载模型
      * 如果已经加载将不会重复加载
      */
-    public static native void loadModel(String modelName, int itemSize, String extractBlobName, boolean useGpu);
+    public static native void loadModel(String modelName, int itemSize, String extractBlobName, int targetSizes, boolean useGpu);
 
     public native void openCamera(int facing, String modelName);
 

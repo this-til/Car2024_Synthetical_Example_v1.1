@@ -21,7 +21,8 @@ public interface IModel<I extends IItem> {
     /***
      * 车辆牌照模型
      */
-    Model<IItem.CardType> CARD_MODEL = new Model<>("card", IItem.CardType.values().length, id -> IItem.CardType.values()[id]);
+    Model<IItem.CardType> CARD_MODEL = new Model<>("card", IItem.CardType.values().length, id -> IItem.CardType.values()[id])
+            .setTargetSizes(1280);
 
     /***
      * 交通识别标志物模型
@@ -36,7 +37,8 @@ public interface IModel<I extends IItem> {
     /***
      * 形状和颜色模型
      */
-    Model<IItem.ShapeAndColorType> SHAPE_AND_COLOR_MODEL = new Model<>("shape_and_color", IItem.ShapeAndColorType.values().length, id -> IItem.ShapeAndColorType.values()[id]);
+    Model<IItem.ShapeAndColorType> SHAPE_AND_COLOR_MODEL = new Model<>("shape_and_color", IItem.ShapeAndColorType.values().length, id -> IItem.ShapeAndColorType.values()[id])
+            .setTargetSizes(1280);
 
     /***
      * 口罩模型
@@ -69,6 +71,9 @@ public interface IModel<I extends IItem> {
         @Accessors(chain = true)
         private String extractBlobName = "output0";
 
+        @Setter
+        @Accessors(chain = true)
+        private int targetSizes = 640;
 
         @Setter
         @Accessors(chain = true)
@@ -90,7 +95,7 @@ public interface IModel<I extends IItem> {
 
         @Override
         public void loadModel() {
-            Yolov8Ncnn.loadModel(getModelName(), getItemSize(), getExtractBlobName(), isUseGpu());
+            Yolov8Ncnn.loadModel(getModelName(), getItemSize(), getExtractBlobName(), getTargetSizes(), isUseGpu());
             loaded = true;
         }
 

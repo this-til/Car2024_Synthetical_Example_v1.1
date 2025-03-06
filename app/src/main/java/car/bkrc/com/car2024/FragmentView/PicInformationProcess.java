@@ -90,6 +90,7 @@ public class PicInformationProcess extends Fragment {
         view.findViewById(R.id.landmark_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
                 .thenApplyAsync(picBitmap -> {
                     requireActivity().runOnUiThread(() -> {
+
                         picrectext_tv.setText("正在识别标识物...");
                         picrec_iv.setImageBitmap(picBitmap);
                     });
@@ -118,6 +119,19 @@ public class PicInformationProcess extends Fragment {
                     return picBitmap;
                 })
                 .thenCompose(picBitmap -> service.qrRecognitionAsync(picBitmap))
+                .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
+                    picrectext_tv.setText(result.getTotal());
+                    picrec_iv.setImageBitmap(result.getOutBitmap());
+                }))));        
+        view.findViewById(R.id.qr_overlap_all_btn).setOnClickListener(v -> addExceptionally(LeftFragment.INSTANCE.getHDBitmapAsync()
+                .thenApplyAsync(picBitmap -> {
+                    requireActivity().runOnUiThread(() -> {
+                        picrectext_tv.setText("正在识别二维码(重叠)...");
+                        picrec_iv.setImageBitmap(picBitmap);
+                    });
+                    return picBitmap;
+                })
+                .thenCompose(picBitmap -> service.qrColorRecognitionAsync(picBitmap))
                 .thenAcceptAsync(result -> requireActivity().runOnUiThread(() -> {
                     picrectext_tv.setText(result.getTotal());
                     picrec_iv.setImageBitmap(result.getOutBitmap());

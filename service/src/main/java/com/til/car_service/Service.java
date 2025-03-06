@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import androidx.palette.graphics.Palette;
 import com.benjaminwan.ocrlibrary.OcrEngine;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
@@ -16,10 +17,7 @@ import com.huawei.hms.mlsdk.dsc.*;
 import com.hyperai.hyperlpr3.HyperLPR3;
 import com.hyperai.hyperlpr3.bean.Plate;
 import com.til.car_service.data.*;
-import com.til.util.BitmapUtil;
-import com.til.util.CharactersUtil;
-import com.til.util.PointUtil;
-import com.til.util.TaskUtil;
+import com.til.util.*;
 import com.til.util.tuple.Ptr;
 import com.yolov8ncnn.IItem;
 import com.yolov8ncnn.IModel;
@@ -34,6 +32,7 @@ import org.opencv.video.Video;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -61,7 +60,7 @@ public class Service extends android.app.Service {
         super.onCreate();
 
         Yolov8Ncnn.init(getAssets());
-        ocrEngine = new OcrEngine(this);
+        //ocrEngine = new OcrEngine(this);
 
         scanner = BarcodeScanning.getClient();
         setting = new MLDocumentSkewCorrectionAnalyzerSetting.Factory().create();
@@ -122,26 +121,34 @@ public class Service extends android.app.Service {
                         return null;
                     }
 
-                    Barcode[] barcodes = new Barcode[list.size()];
-                    String[] rawValues = new String[list.size()];
-
                     StringBuilder stringBuilder = new StringBuilder();
                     Bitmap outBitmap = Bitmap.createBitmap(bitmap);
                     Canvas canvas = new Canvas(outBitmap);
 
                     for(int i = 0; i < list.size(); i++) {
                         Barcode barcode = list.get(i);
+                        Rect rect = barcode.getBoundingBox();
+                        if (rect == null) {
+                            continue;
+                        }
 
-                        barcodes[i] = barcode;
-                        rawValues[i] = barcode.getRawValue();
+                        Palette generate = Palette.from(bitmap).setRegion(rect.left, rect.top, rect.right, rect.bottom).generate();
+
+                        Palette.Swatch dominantSwatch = generate.getDominantSwatch();
+                        ColorType colorType = ColorType.black;
+
+                        if (dominantSwatch != null) {
+                            int color = dominantSwatch.getRgb();
+                            colorType = ColorType.typGetSimilarColor(ColorUtil.argbToBgrScalar(color), null);
+                            // 处理颜色结果
+                        }
 
                         stringBuilder.append("二维码").append(i).append(':').append(' ').append(barcode.getRawValue()).append('\n');
 
 
-                        Rect rect = barcode.getBoundingBox();
                         // 画框
                         Paint paint = new Paint();
-                        paint.setColor(Color.GREEN);
+                        paint.setColor(ColorUtil.rgbScalarToArgb(colorType.getRgbColor()));
                         paint.setStyle(Paint.Style.STROKE);
                         paint.setStrokeWidth(5);
                         canvas.drawRect(rect, paint);
@@ -152,16 +159,94 @@ public class Service extends android.app.Service {
                         textPaint.setColor(Color.RED);
                         textPaint.setTextSize(30f);
                         textPaint.setStyle(Paint.Style.FILL);
+                        canvas.drawText("二维码" + i + barcode.getRawValue(), rect.left, rect.top - 10, textPaint); // 绘制文字
                     }
 
                     return new QrRecognitionResult(
-                            barcodes,
-                            rawValues,
-                            barcodes.length == 0 ? "未识别到二维码" : stringBuilder.toString(),
+                            list.stream().map(s -> new QrRecognitionResult.QeCell(s, s.getRawValue(), null)).toArray(QrRecognitionResult.QeCell[]::new),
                             outBitmap
                     );
 
                 });
+    }
+
+    public CompletionStage<QrRecognitionResult> qrColorRecognitionAsync(Bitmap bitmap) {
+        return CompletableFuture.supplyAsync(() -> null)
+                .thenComposeAsync(v -> {
+
+                    int width = bitmap.getWidth();
+                    int height = bitmap.getHeight();
+
+                    Bitmap outBitmap = Bitmap.createBitmap(bitmap);
+                    Canvas canvas = new Canvas(outBitmap);
+
+                    Mat mat = new Mat();
+                    org.opencv.android.Utils.bitmapToMat(bitmap, mat);
+
+                    Mat bgrMat = new Mat();
+                    Imgproc.cvtColor(mat, bgrMat, Imgproc.COLOR_RGBA2BGR);
+
+                    // 转换为 HSV 颜色空间
+                    Mat hsvMat = new Mat();
+                    Imgproc.cvtColor(bgrMat, hsvMat, Imgproc.COLOR_BGR2HSV);
+
+                    List<CompletableFuture<?>> taskList = new ArrayList<>();
+                    List<QrRecognitionResult.QeCell> qeCellList = new ArrayList<>();
+
+                    for(ColorType value : ColorType.values()) {
+
+                        if (value == ColorType.white) {
+                            //TODO 后续考录使用输入来筛选颜色
+                            continue;
+                        }
+
+                        taskList.add(
+                                CompletableFuture.supplyAsync(() -> {
+                                            Mat binaryMask = value.getBinaryMask(hsvMat);
+                                            Mat smoothBinaryMask = MatUtil.fastMorphSmooth(binaryMask);
+                                            Bitmap binaryMaskBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                                            org.opencv.android.Utils.matToBitmap(smoothBinaryMask, binaryMaskBitmap);
+                                            return binaryMaskBitmap;
+                                        })
+                                        .thenComposeAsync(
+                                                binaryMaskBitmap -> CompletableFuture
+                                                        .supplyAsync(() -> InputImage.fromBitmap(binaryMaskBitmap, 0))
+                                                        .thenComposeAsync(image -> TaskUtil.convert(scanner.process(image)))
+                                        )
+                                        .thenAccept(result -> {
+                                            synchronized (canvas) {
+                                                for(Barcode barcode : result) {
+
+                                                    Rect rect = barcode.getBoundingBox();
+                                                    // 画框
+                                                    Paint paint = new Paint();
+                                                    paint.setColor(ColorUtil.rgbScalarToArgb(value.getRgbColor()));
+                                                    paint.setStyle(Paint.Style.STROKE);
+                                                    paint.setStrokeWidth(5);
+                                                    canvas.drawRect(rect, paint);
+                                                    assert rect != null;
+                                                    // 绘制二维码顺序编号
+
+                                                    Paint textPaint = new Paint();
+                                                    textPaint.setColor(ColorUtil.rgbScalarToArgb(value.getRgbColor()));
+                                                    textPaint.setTextSize(30f);
+                                                    textPaint.setStyle(Paint.Style.FILL);
+                                                    canvas.drawText("二维码" + qeCellList.size() + ":" + barcode.getRawValue(), rect.left, rect.top - 10, textPaint); // 绘制文字
+
+                                                    qeCellList.add(new QrRecognitionResult.QeCell(barcode, barcode.getRawValue(), value));
+                                                }
+                                            }
+                                        })
+                        );
+
+                    }
+
+                    return CompletableFuture.allOf(taskList.toArray(new CompletableFuture[0]))
+                            .thenApplyAsync(vv -> new QrRecognitionResult(qeCellList.toArray(new QrRecognitionResult.QeCell[0]), outBitmap));
+
+                });
+
+
     }
 
     /***
@@ -220,7 +305,6 @@ public class Service extends android.app.Service {
         return CompletableFuture.supplyAsync(() -> licensePlatesRecognition(bitmap));
     }
 
-
     /***
      *  车牌识别的增强版
      *  同时运用yolo
@@ -237,8 +321,6 @@ public class Service extends android.app.Service {
 
                     int imgWidth = bitmap.getWidth();
                     int imgHeight = bitmap.getHeight();
-
-                    CompletableFuture<Object> completableFuture = CompletableFuture.supplyAsync(() -> null);
 
                     for(IItem.ItemCell<IItem.CardType> itemCell : itemCells) {
                         RectF rect = itemCell.getRect();
@@ -274,67 +356,39 @@ public class Service extends android.app.Service {
                                 expandedBottom - expandedTop
                         );
 
-                        /*CompletableFuture<?> voidCompletableFuture = completableFuture
-                                .thenComposeAsync(v -> findCornerAsync(plateBitmap))
-                                .exceptionally(e -> {
-                                    Log.e("Service", "Error: ", e);
-                                    return new FindCornerResult(null, null, null, plateBitmap);
-                                })
-                                .thenAcceptAsync(findCornerResult -> {
-                                    String ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(findCornerResult.getOutBitmap())).getOcrResult().getStrRes());
-                                    if (CharactersUtil.isLicensePlate(ocr)) {
-                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
-                                        return;
-                                    }
-                                    Bitmap bitmap_180 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 180);
-                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_180)).getOcrResult().getStrRes());
-                                    if (CharactersUtil.isLicensePlate(ocr)) {
-                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
-                                        return;
-                                    }
-                                    Bitmap bitmap_90 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 90);
-                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_90)).getOcrResult().getStrRes());
-                                    if (CharactersUtil.isLicensePlate(ocr)) {
-                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
-                                        return;
-                                    }
-                                    Bitmap bitmap_270 = BitmapUtil.rotateBitmap(findCornerResult.getOutBitmap(), 270);
-                                    ocr = CharactersUtil.removeSpecialCharactersExceptChinese(ocr(new OcrInput(bitmap_270)).getOcrResult().getStrRes());
-                                    if (CharactersUtil.isLicensePlate(ocr)) {
-                                        licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocr));
-                                    }
-                                });*/
-
-                        AtomicBoolean complete = new AtomicBoolean(false);
+                        List<CompletableFuture<?>> sonTask = new ArrayList<>();
+                        Map<String, Integer> map = new ConcurrentHashMap<>();
 
                         for(int i = 0; i < 4; i++) {
                             int finalI = i;
                             CompletableFuture<?> rotateCompletableFuture = CompletableFuture.supplyAsync(() -> {
                                 for(int ii = 0; ii < 6; ii++) {
-                                    if (complete.get()) {
-                                        return null;
-                                    }
-
                                     Bitmap rotateBitmap = BitmapUtil.rotateBitmap(plateBitmap, finalI * 90 + ii * 15);
                                     String ocr = ocr(new OcrInput(rotateBitmap)).getOcrResult().getStrRes();
                                     Ptr<String> ocrPtr = new Ptr<>(null);
                                     if (CharactersUtil.isLicensePlate(ocr, ocrPtr)) {
-                                        synchronized (complete) {
-                                            if (!complete.get()) {
-                                                complete.set(true);
-                                                licensePlateList.add(new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, ocrPtr.getT()));
-                                                return null;
-                                            }
-                                        }
+                                        map.put(ocrPtr.getT(), Objects.requireNonNullElse(map.get(ocrPtr.getT()), 0) + 1);
                                     }
-
-
                                 }
                                 return null;
                             });
-                            task.add(rotateCompletableFuture);
+                            sonTask.add(rotateCompletableFuture);
                         }
 
+                        task.add(
+                                CompletableFuture.allOf(sonTask.toArray(new CompletableFuture[0]))
+                                        .thenRunAsync(
+                                                () -> map
+                                                        .entrySet()
+                                                        .stream()
+                                                        .max(Map.Entry.comparingByValue())
+                                                        .ifPresent(
+                                                                entry -> licensePlateList.add(
+                                                                        new LicensePlatesRecognitionEnhancementResult.LicensePlate(itemCell, entry.getKey())
+                                                                )
+                                                        )
+                                        )
+                        );
 
                     }
 

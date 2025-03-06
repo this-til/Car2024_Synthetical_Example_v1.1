@@ -231,6 +231,18 @@
                             android:textColor="@color/black"
                             android:textSize="12sp"/>
 
+
+                    <Button
+                            android:id="@+id/qr_overlap_all_btn"
+                            android:layout_width="match_parent"
+                            android:layout_height="30dp"
+                            android:layout_marginTop="5dp"
+                            android:background="@drawable/reference_background"
+                            android:gravity="center"
+                            android:padding="5dp"
+                            android:text="二维码(重叠)"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"/>
                     <Button
                             android:id="@+id/carplate_all_btn"
                             android:layout_width="match_parent"
